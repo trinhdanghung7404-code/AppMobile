@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027649394490",
+    "project_id": "minihos-42118",
+    "storage_bucket": "minihos-42118.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027649394490:android:d6b8ddd8242bb43a2a6203",
+        "android_client_info": {
+          "package_name": "com.example.thuoc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQUZ0m0h6MHCytQyNbMNbChOx6hIsBxgg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
