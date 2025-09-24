@@ -36,11 +36,8 @@ public class AuthController {
     // 🔹 Hàm tạo Intent theo role
     private Intent getDashboardIntent(Context context, User user) {
         Intent intent;
-        if ("manager".equals(user.getRole())) {
-            intent = new Intent(context, ManagerDashboardActivity.class);
-        } else {
-            intent = new Intent(context, HomeActivity.class);
-        }
+
+        intent = new Intent(context, ManagerDashboardActivity.class);
 
         intent.putExtra("userId", user.getId());
         intent.putExtra("fullName", user.getName());
@@ -53,6 +50,7 @@ public class AuthController {
     }
 
     // 🔹 Đăng ký
+    // Đăng ký
     public void registerUser(Context context, String fullName, String phone, String pass, String confirm, String role) {
         if (fullName.isEmpty() || phone.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
             Toast.makeText(context, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
@@ -72,20 +70,14 @@ public class AuthController {
                     } else {
                         String hashedPass = hashPassword(pass);
 
-                        // Tạo user mới
-                        String userId = db.collection("Users").document().getId();
+                        // 👉 Tạo user mới, chưa có id
                         User user = new User(fullName, phone, hashedPass);
-                        user.setId(userId);
                         user.setRole(role);
 
-                        db.collection("Users").document(userId)
-                                .set(user)
-                                .addOnSuccessListener(aVoid ->
-                                        Toast.makeText(context, "Đăng ký thành công", Toast.LENGTH_SHORT).show()
-                                )
-                                .addOnFailureListener(e ->
-                                        Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                                );
+                        // 👉 Dùng UserDao để thêm user (id = số thứ tự)
+                        new com.example.thuoc.dao.UserDao().addUser(user);
+
+                        Toast.makeText(context, "Đăng ký thành công", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e ->

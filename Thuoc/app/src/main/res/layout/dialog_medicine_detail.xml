@@ -1,0 +1,51 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Tên thuốc -->
+    <TextView
+        android:id="@+id/tvMedName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tên thuốc"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"/>
+
+    <!-- Liều lượng -->
+    <TextView
+        android:id="@+id/tvMedDosage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Liều lượng"
+        android:layout_marginTop="8dp"
+        android:textSize="16sp" />
+
+    <!-- Ngày hết hạn -->
+    <TextView
+        android:id="@+id/tvMedExpiry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ngày hết hạn"
+        android:layout_marginTop="8dp"
+        android:textSize="16sp" />
+
+    <!-- Giờ uống -->
+    <TextView
+        android:id="@+id/tvMedTimes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Giờ uống"
+        android:layout_marginTop="8dp"
+        android:textSize="16sp" />
+
+    <!-- Nút thêm giờ -->
+    <Button
+        android:id="@+id/btnAddTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Thêm giờ uống"
+        android:layout_marginTop="16dp"/>
+</LinearLayout>

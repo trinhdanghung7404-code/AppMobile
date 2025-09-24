@@ -2,6 +2,7 @@ package com.example.thuoc.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -33,15 +34,18 @@ public class LoginActivity extends AppCompatActivity {
             String pass = etPassword.getText().toString().trim();
 
             if (phone.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            authController.loginUser(this, phone, pass);
+            // 🔹 Truyền đúng Activity context, không phải getApplicationContext()
+            Log.d("LoginActivity", "Đăng nhập với: " + phone);
+            authController.loginUser(LoginActivity.this, phone, pass);
         });
 
         tvGoRegister.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
+            Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(i);
         });
     }
 }

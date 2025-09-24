@@ -1,30 +1,28 @@
 package com.example.thuoc.model;
 
 public class User {
-    private String id;
+    private String id;          // 🔹 Đổi sang int để làm STT
     private String name;
     private String phone;
     private String password;
-    private String role;       // "manager" hoặc "member"
-    private String managerId;  // nếu là member thì lưu managerId
+    private String role;     // "manager" hoặc "user"
 
-    // 🔹 Bắt buộc: constructor rỗng cho Firebase
+    // Constructor rỗng cho Firebase
     public User() {}
 
-    // 🔹 Constructor 3 tham số: dùng cho đăng ký (fullName, phone, password)
     public User(String name, String phone, String password) {
         this.name = name;
         this.phone = phone;
         this.password = password;
-        this.role = "member"; // mặc định member, hoặc bạn set lại trong code
     }
 
-    // 🔹 Constructor 4 tham số: nếu muốn set role/managerId ngay
-    public User(String name, String phone, String role, String managerId) {
+    // Constructor đăng ký
+    public User(String id, String name, String phone, String password, String role) {
+        this.id = id;
         this.name = name;
         this.phone = phone;
+        this.password = password;
         this.role = role;
-        this.managerId = managerId;
     }
 
     // Getter & Setter
@@ -42,7 +40,4 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
-
-    public String getManagerId() { return managerId; }
-    public void setManagerId(String managerId) { this.managerId = managerId; }
 }

@@ -1,5 +1,6 @@
 package com.example.thuoc.view;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -13,73 +14,84 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.thuoc.R;
 import com.example.thuoc.adapter.MemberAdapter;
-import com.example.thuoc.dao.UserDao;
-import com.example.thuoc.model.User;
+import com.example.thuoc.model.UserMedicine;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.Nullable;
 
 public class ManagerDashboardActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private MemberAdapter memberAdapter;
-    private List<User> memberList = new ArrayList<>();
+    private final List<UserMedicine> memberList = new ArrayList<>();
+    private final List<String> docIds = new ArrayList<>(); // lưu documentId tách riêng
     private FloatingActionButton fabAdd;
-
     private FirebaseFirestore db;
-    private String currentManagerId;
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_dashboard);
-
-        // lấy userId truyền từ LoginActivity
-        Intent intent = getIntent();
-        currentManagerId = intent.getStringExtra("userId");
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         memberAdapter = new MemberAdapter(memberList);
         recyclerView.setAdapter(memberAdapter);
 
+        // 👉 Xử lý click item
+        memberAdapter.setOnItemClickListener((userMed, position) -> {
+            String docId = docIds.get(position);
+            Intent i = new Intent(ManagerDashboardActivity.this, UserMedicineActivity.class);
+            i.putExtra("userId", docId);
+            i.putExtra("userName", userMed.getUserName());
+            i.putExtra("userPhone", userMed.getPhone());
+            startActivity(i);
+        });
+
         fabAdd = findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(v -> showAddMemberDialog());
 
         db = FirebaseFirestore.getInstance();
 
-        // lắng nghe danh sách members thuộc manager này (real-time update)
-        db.collection("Users")
-                .whereEqualTo("managerId", currentManagerId)
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot snapshots,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (e != null) {
-                            Toast.makeText(ManagerDashboardActivity.this,
-                                    "Lỗi tải dữ liệu: " + e.getMessage(),
-                                    Toast.LENGTH_SHORT).show();
-                            return;
-                        }
+        // 👉 Lắng nghe thay đổi danh sách user
+        db.collection("UserMedicine")
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-                        memberList.clear();
-                        if (snapshots != null) {
-                            for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                                User u = dc.getDocument().toObject(User.class);
+                    memberList.clear();
+                    docIds.clear();
+                    if (snapshots != null) {
+                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                            UserMedicine u = doc.toObject(UserMedicine.class);
+                            if (u != null) {
                                 memberList.add(u);
+                                docIds.add(doc.getId());
                             }
                         }
                         memberAdapter.notifyDataSetChanged();
                     }
                 });
+
+        // 👉 BottomNavigationView
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                return true;
+            } else if (id == R.id.nav_list) {
+                startActivity(new Intent(this, MedicineActivity.class));
+                return true;
+            }
+            return false;
+        });
     }
 
     private void showAddMemberDialog() {
@@ -95,9 +107,20 @@ public class ManagerDashboardActivity extends AppCompatActivity {
                     String phone = edtPhone.getText().toString().trim();
 
                     if (!name.isEmpty() && !phone.isEmpty()) {
-                        User member = new User(name, phone, "member", currentManagerId);
-                        new UserDao().addUser(member); // dùng Firestore trong UserDao
-                        Toast.makeText(this, "Đã thêm thành viên", Toast.LENGTH_SHORT).show();
+                        String docId = String.valueOf(System.currentTimeMillis());
+
+                        UserMedicine user = new UserMedicine(name, phone);
+
+                        db.collection("UserMedicine")
+                                .document(docId)
+                                .set(user)
+                                .addOnSuccessListener(v -> {
+                                    Toast.makeText(this, "Đã thêm thành viên mới", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Lỗi tạo UserMedicine: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+
                     } else {
                         Toast.makeText(this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
                     }

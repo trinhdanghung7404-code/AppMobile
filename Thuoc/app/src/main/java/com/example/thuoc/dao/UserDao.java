@@ -1,7 +1,12 @@
 package com.example.thuoc.dao;
 
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
 import com.example.thuoc.model.User;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class UserDao {
     private final FirebaseFirestore db;
@@ -10,9 +15,23 @@ public class UserDao {
         db = FirebaseFirestore.getInstance();
     }
 
-    public void addUser(User user) {
-        String id = db.collection("Users").document().getId();
-        user.setId(id);
-        db.collection("Users").document(id).set(user);
+    public void addUser(@NonNull User user) {
+        db.collection("Users")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    int newId = querySnapshot.size() + 1;
+                    user.setId(String.valueOf(newId)); // ép id = số thứ tự
+
+                    db.collection("Users")
+                            .document(String.valueOf(newId)) // documentId = "1","2","3"
+                            .set(user)                       // lưu field id = "1"
+                            .addOnSuccessListener(aVoid ->
+                                    Log.d("UserDao", "Thêm user thành công, id = " + newId))
+                            .addOnFailureListener(e ->
+                                    Log.e("UserDao", "Lỗi thêm user", e));
+                })
+                .addOnFailureListener(e ->
+                        Log.e("UserDao", "Lỗi khi lấy số lượng Users", e));
     }
+
 }

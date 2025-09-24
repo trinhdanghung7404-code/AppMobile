@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.thuoc.util.Constants;
 import com.example.thuoc.view.LoginActivity;
+import com.example.thuoc.view.UserLoginActivity;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,13 +23,11 @@ public class MainActivity extends AppCompatActivity {
 
         btnManager.setOnClickListener(v -> {
             Intent i = new Intent(MainActivity.this, LoginActivity.class);
-            i.putExtra(Constants.EXTRA_ROLE, Constants.ROLE_MANAGER);
             startActivity(i);
         });
 
         btnUser.setOnClickListener(v -> {
-            Intent i = new Intent(MainActivity.this, LoginActivity.class);
-            i.putExtra(Constants.EXTRA_ROLE, Constants.ROLE_USER);
+            Intent i = new Intent(MainActivity.this, UserLoginActivity.class);
             startActivity(i);
         });
     }
