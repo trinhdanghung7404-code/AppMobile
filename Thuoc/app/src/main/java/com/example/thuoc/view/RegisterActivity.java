@@ -23,7 +23,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         authController = new AuthController();
 
-        // ✅ Lấy role từ Intent (được truyền từ MainActivity -> LoginActivity -> RegisterActivity)
+        // Lấy role từ Intent (được truyền từ MainActivity -> LoginActivity -> RegisterActivity)
         role = getIntent().getStringExtra(Constants.EXTRA_ROLE);
         if (role == null) role = Constants.ROLE_USER; // mặc định nếu không có
 
@@ -40,7 +40,7 @@ public class RegisterActivity extends AppCompatActivity {
             String pass = etPassword.getText().toString().trim();
             String confirm = etConfirmPassword.getText().toString().trim();
 
-            // ✅ Truyền role sang AuthController
+            // Truyền role sang AuthController
             authController.registerUser(this, fullName, phone, pass, confirm, role);
         });
 

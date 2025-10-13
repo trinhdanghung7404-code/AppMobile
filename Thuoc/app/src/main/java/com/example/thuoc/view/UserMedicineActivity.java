@@ -3,7 +3,9 @@ package com.example.thuoc.view;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,45 +35,45 @@ public class UserMedicineActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String userId;
     private String userName; // tên user truyền sang
+    private TextView tvTitle; // để update lại tên user sau khi sửa
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_medicine);
 
-        // 👉 Nhận dữ liệu từ Intent
+        // Nhận dữ liệu từ Intent
         userId = getIntent().getStringExtra("userId");
         userName = getIntent().getStringExtra("userName");
 
-        // 👉 Tiêu đề hiển thị tên thành viên
-        TextView tvTitle = findViewById(R.id.tvTitleUserMedicine);
+        tvTitle = findViewById(R.id.tvTitleUserMedicine);
         if (userName != null) {
             tvTitle.setText("Danh sách thuốc của " + userName);
         }
 
         recyclerView = findViewById(R.id.recyclerViewUserMedicine);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         adapter = new MedicineEntryAdapter(new ArrayList<>());
         recyclerView.setAdapter(adapter);
 
         db = FirebaseFirestore.getInstance();
 
-        // 👉 Load thuốc trong subcollection
+        // Load thuốc
         loadUserMedicines(userId);
 
-        // 👉 Click vào item để xem chi tiết
+        // Click item -> chi tiết thuốc
         adapter.setOnItemClickListener((entry, pos) -> showMedicineDetailDialog(entry));
 
-        // 👉 Nút back
-        ImageButton btnBack = findViewById(R.id.btnBack);
-        btnBack.setOnClickListener(v -> finish());
+        // Nút back
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
-        // 👉 Nút thêm thuốc
+        // Nút thêm thuốc
         findViewById(R.id.btnAddMedicine).setOnClickListener(v -> showSelectMedicineDialog());
+
+        // Nút sửa user
+        findViewById(R.id.btnEditUser).setOnClickListener(v -> showEditUserDialog());
     }
 
-    /** Load thuốc từ subcollection Medicines của user */
     private void loadUserMedicines(String userId) {
         if (userId == null || userId.isEmpty()) return;
 
@@ -84,7 +86,7 @@ public class UserMedicineActivity extends AppCompatActivity {
                     for (DocumentSnapshot doc : querySnapshot) {
                         MedicineEntry entry = doc.toObject(MedicineEntry.class);
                         if (entry != null) {
-                            entry.setDocId(doc.getId()); // 👉 thêm dòng này
+                            entry.setDocId(doc.getId());
                             newList.add(entry);
                         }
                     }
@@ -128,28 +130,45 @@ public class UserMedicineActivity extends AppCompatActivity {
                 });
     }
 
-    /** Thêm thuốc vào subcollection Medicines */
+    /** Thêm thuốc vào subcollection Medicines (tránh trùng lặp) */
     private void addMedicineToUser(Medicine medicine) {
         if (medicine == null || userId == null || userId.isEmpty()) return;
-
-        MedicineEntry entry = new MedicineEntry(
-                medicine.getName(),
-                "2 viên/ngày",
-                "Sáng - Tối"
-        );
 
         db.collection("UserMedicine")
                 .document(userId)
                 .collection("Medicines")
-                .add(entry)
-                .addOnSuccessListener(ref -> {
-                    Toast.makeText(this, "Đã thêm thuốc cho " + userName, Toast.LENGTH_SHORT).show();
-                    loadUserMedicines(userId);
+                .whereEqualTo("name", medicine.getName()) // kiểm tra theo tên thuốc
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        // Đã tồn tại
+                        Toast.makeText(this, "Thuốc " + medicine.getName() + " đã được thêm trước đó", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // Chưa có → thêm mới
+                        MedicineEntry entry = new MedicineEntry(
+                                medicine.getName(),
+                                "2 viên/ngày",
+                                "Sáng - Tối"
+                        );
+
+                        db.collection("UserMedicine")
+                                .document(userId)
+                                .collection("Medicines")
+                                .add(entry)
+                                .addOnSuccessListener(ref -> {
+                                    Toast.makeText(this, "Đã thêm thuốc cho " + userName, Toast.LENGTH_SHORT).show();
+                                    loadUserMedicines(userId);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Lỗi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                    }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Lỗi kiểm tra thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+
     private void showMedicineDetailDialog(MedicineEntry entry) {
         if (entry == null) return;
 
@@ -195,7 +214,7 @@ public class UserMedicineActivity extends AppCompatActivity {
                 .show();
     }
 
-    /** 👉 Hàm thêm giờ uống vào Firestore */
+    /** Hàm thêm giờ uống vào Firestore */
     private void addTimeToMedicine(String entryDocId, String newTime) {
         if (userId == null || userId.isEmpty() || entryDocId == null || entryDocId.isEmpty()) return;
 
@@ -211,5 +230,60 @@ public class UserMedicineActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Lỗi khi thêm giờ: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    /** Hiện dialog chỉnh sửa thông tin user */
+    private void showEditUserDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_user, null);
+
+        EditText etUserName = dialogView.findViewById(R.id.etUserName);
+        EditText etUserPhone = dialogView.findViewById(R.id.etUserPhone);
+        Switch switchText = dialogView.findViewById(R.id.switchTextNotify);
+        Switch switchVoice = dialogView.findViewById(R.id.switchVoiceNotify);
+
+        // Load dữ liệu hiện tại từ Firestore
+        db.collection("UserMedicine").document(userId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String name = doc.getString("name");
+                        String phone = doc.getString("phone");
+                        Boolean textNotify = doc.getBoolean("textNotify");
+                        Boolean voiceNotify = doc.getBoolean("voiceNotify");
+
+                        etUserName.setText(name != null ? name : "");
+                        etUserPhone.setText(phone != null ? phone : "");
+                        switchText.setChecked(textNotify != null && textNotify);
+                        switchVoice.setChecked(voiceNotify != null && voiceNotify);
+                    }
+                });
+
+        new AlertDialog.Builder(this)
+                .setTitle("Chỉnh sửa thông tin")
+                .setView(dialogView)
+                .setPositiveButton("Lưu", (d, w) -> {
+                    String newName = etUserName.getText().toString().trim();
+                    String newPhone = etUserPhone.getText().toString().trim();
+                    boolean textNotify = switchText.isChecked();
+                    boolean voiceNotify = switchVoice.isChecked();
+
+                    db.collection("UserMedicine")
+                            .document(userId)
+                            .update(
+                                    "name", newName,
+                                    "phone", newPhone,
+                                    "textNotify", textNotify,
+                                    "voiceNotify", voiceNotify
+                            )
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "Đã cập nhật thông tin", Toast.LENGTH_SHORT).show();
+                                tvTitle.setText("Danh sách thuốc của " + newName);
+                                userName = newName; // update lại userName
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                            );
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 }

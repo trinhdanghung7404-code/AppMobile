@@ -7,12 +7,11 @@ import com.google.firebase.firestore.Exclude;
 public class MedicineEntry {
     private String name;
     private String dosage;
-    private String note;        // ghi chú (không bắt buộc)
-    private int quantity;       // số lượng
-    private String expiryDate;  // ngày hết hạn (vd "2025-09-15")
+    private String note;
+    private int quantity;
+    private String expiryDate;
     private List<String> times; // danh sách giờ uống, vd ["08:00", "20:00"]
 
-    // Không lưu vào Firestore (tạm giữ documentId khi cần) - @Exclude để Firestore không map
     @Exclude
     private String docId;
 
@@ -26,11 +25,10 @@ public class MedicineEntry {
         this.note = note;
         this.quantity = quantity;
         this.expiryDate = expiryDate;
-        this.times = times;
+        this.times = times != null ? times : new ArrayList<>();
     }
 
-    // Convenience constructor (3 args) — tương thích với chỗ bạn đang gọi
-    // timeStr sẽ được thêm vào list times (nếu không rỗng)
+    // Convenience constructor (3 args)
     public MedicineEntry(String name, String dosage, String timeStr) {
         this.name = name;
         this.dosage = dosage;

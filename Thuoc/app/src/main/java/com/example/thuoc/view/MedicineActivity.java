@@ -1,6 +1,7 @@
 package com.example.thuoc.view;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -17,16 +18,20 @@ import com.example.thuoc.dao.MedicineDAO;
 import com.example.thuoc.model.Medicine;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MedicineActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewMedicine;
     private MedicineAdapter adapter;
     private List<Medicine> medicineList;
-    private MedicineDAO medicineDAO; // dùng DAO
+    private MedicineDAO medicineDAO;
+    private FirebaseFirestore db; // 🔹 thêm để truy cập Firestore cho auto ID
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +46,7 @@ public class MedicineActivity extends AppCompatActivity {
         recyclerViewMedicine.setAdapter(adapter);
 
         medicineDAO = new MedicineDAO();
+        db = FirebaseFirestore.getInstance(); // 🔹 khởi tạo Firestore
 
         loadMedicines();
 
@@ -78,6 +84,24 @@ public class MedicineActivity extends AppCompatActivity {
         EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
         EditText etExpiry = dialogView.findViewById(R.id.etExpiry);
 
+        // 🔹 Thêm DatePicker cho ô hạn sử dụng
+        etExpiry.setFocusable(false);
+        etExpiry.setClickable(true);
+        etExpiry.setOnClickListener(v -> {
+            final Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                    (view, year1, monthOfYear, dayOfMonth) -> {
+                        String selectedDate = String.format(Locale.getDefault(),
+                                "%02d/%02d/%04d", dayOfMonth, monthOfYear + 1, year1);
+                        etExpiry.setText(selectedDate);
+                    }, year, month, day);
+            datePickerDialog.show();
+        });
+
         new AlertDialog.Builder(this)
                 .setTitle("Thêm thuốc")
                 .setView(dialogView)
@@ -103,13 +127,21 @@ public class MedicineActivity extends AppCompatActivity {
                         return;
                     }
 
-                    Medicine med = new Medicine(null, name, expiry, qty, "viên");
+                    // 🔹 Sinh ID tăng dần dựa trên số thuốc hiện có
+                    db.collection("Medicine")
+                            .get()
+                            .addOnSuccessListener(query -> {
+                                int nextId = query.size() + 1;
+                                String id = String.valueOf(nextId);
 
-                    medicineDAO.addMedicine(
-                            med,
-                            () -> Toast.makeText(this, "Đã thêm thuốc: " + name, Toast.LENGTH_SHORT).show(),
-                            e -> Toast.makeText(this, "Lỗi khi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                    );
+                                Medicine med = new Medicine(id, name, expiry, qty, "viên");
+                                medicineDAO.addMedicine(
+                                        med,
+                                        () -> Toast.makeText(this, "Đã thêm thuốc #" + id, Toast.LENGTH_SHORT).show(),
+                                        e -> Toast.makeText(this, "Lỗi khi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                );
+                            })
+                            .addOnFailureListener(e -> Toast.makeText(this, "Không thể tạo ID: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 })
                 .setNegativeButton("Hủy", null)
                 .show();

@@ -8,19 +8,35 @@
         android:id="@+id/etMedicineName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Tên thuốc" />
+        android:hint="Tên thuốc"
+        android:inputType="textPersonName"
+        android:drawableStart="@android:drawable/ic_menu_edit"
+        android:drawablePadding="8dp"
+        android:padding="10dp" />
 
     <EditText
         android:id="@+id/etQuantity"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Số lượng"
-        android:inputType="number" />
+        android:inputType="number"
+        android:drawableStart="@android:drawable/ic_menu_sort_by_size"
+        android:drawablePadding="8dp"
+        android:padding="10dp"
+        android:layout_marginTop="8dp" />
 
+    <!-- 🔹 Trường hạn sử dụng đã chuyển sang chế độ chỉ click (DatePicker) -->
     <EditText
         android:id="@+id/etExpiry"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Hạn sử dụng (dd/MM/yyyy)" />
+        android:hint="Chọn hạn sử dụng"
+        android:focusable="false"
+        android:clickable="true"
+        android:inputType="none"
+        android:drawableStart="@android:drawable/ic_menu_my_calendar"
+        android:drawablePadding="8dp"
+        android:padding="10dp"
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>

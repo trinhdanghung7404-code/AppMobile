@@ -27,14 +27,15 @@
         android:layout_above="@id/bottomNavigation"
         android:padding="16dp" />
 
-    <!-- Floating Action Button màu xanh lá, bên phải -->
+    <!-- Floating Action Button màu xanh lá (Thêm thành viên) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_above="@id/bottomNavigation"
-        android:layout_margin="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
         android:backgroundTint="@android:color/holo_green_dark" />
@@ -43,8 +44,25 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70dp"
         android:layout_alignParentBottom="true"
-        app:menu="@menu/bottom_nav_menu" />
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconSize="40dp"
+        app:labelVisibilityMode="unlabeled"
+        android:background="#EDE1F6"
+        android:elevation="8dp" />
+
+    <!-- Nút Tài khoản tròn trồi lên ở giữa -->
+    <ImageButton
+        android:id="@+id/btnAccount"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="28dp"
+        android:background="@drawable/bg_circle_white"
+        android:src="@drawable/ic_account"
+        android:scaleType="centerInside"
+        android:elevation="16dp" />
 
 </RelativeLayout>

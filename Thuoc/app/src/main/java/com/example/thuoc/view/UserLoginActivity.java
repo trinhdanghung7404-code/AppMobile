@@ -49,10 +49,10 @@ public class UserLoginActivity extends AppCompatActivity {
                         DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
 
                         String userId = doc.getId();
-                        String userName = doc.getString("name"); // giả sử bạn có field "name"
+                        String userName = doc.getString("userName");
 
-                        // 👉 Chuyển sang UserMedicineActivity
-                        Intent i = new Intent(UserLoginActivity.this, UserMedicineActivity.class);
+                        // Chuyển sang UserMedicineActivity
+                        Intent i = new Intent(UserLoginActivity.this, UserDashboardActivity.class);
                         i.putExtra("userId", userId);
                         i.putExtra("userName", userName);
                         startActivity(i);

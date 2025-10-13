@@ -5,11 +5,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.example.thuoc.model.User;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.*;
 
 public class UserDao {
-    private final FirebaseFirestore db;
+    private FirebaseFirestore db;
 
     public UserDao() {
         db = FirebaseFirestore.getInstance();

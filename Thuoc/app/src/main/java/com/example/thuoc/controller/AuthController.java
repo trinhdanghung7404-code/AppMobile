@@ -95,9 +95,16 @@ public class AuthController {
                 .addOnSuccessListener(snapshots -> {
                     if (!snapshots.isEmpty()) {
                         User user = snapshots.getDocuments().get(0).toObject(User.class);
+
                         if (user != null && user.getPassword() != null && user.getPassword().equals(hashedPass)) {
+                            context.getSharedPreferences("USER_SESSION", Context.MODE_PRIVATE)
+                                    .edit()
+                                    .putString("user_id", user.getId())
+                                    .apply();
+
                             Toast.makeText(context, "Đăng nhập thành công", Toast.LENGTH_SHORT).show();
-                            context.startActivity(getDashboardIntent(context, user)); // ✅ gọi hàm riêng
+
+                            context.startActivity(getDashboardIntent(context, user));
                         } else {
                             Toast.makeText(context, "Sai mật khẩu", Toast.LENGTH_SHORT).show();
                         }

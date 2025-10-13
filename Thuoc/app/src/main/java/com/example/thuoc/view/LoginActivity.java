@@ -38,7 +38,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            // 🔹 Truyền đúng Activity context, không phải getApplicationContext()
+            // Truyền đúng Activity context, không phải getApplicationContext()
             Log.d("LoginActivity", "Đăng nhập với: " + phone);
             authController.loginUser(LoginActivity.this, phone, pass);
         });

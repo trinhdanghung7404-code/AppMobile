@@ -1,21 +1,17 @@
 package com.example.thuoc.dao;
 
 import com.example.thuoc.model.Medicine;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class MedicineDAO {
-    private final FirebaseFirestore db;
-
+    private FirebaseFirestore db;
     public MedicineDAO() {
         db = FirebaseFirestore.getInstance();
     }
-
     // Lắng nghe thay đổi danh sách thuốc
     public ListenerRegistration getAllMedicines(Consumer<List<Medicine>> onSuccess,
                                                 Consumer<Exception> onError) {
