@@ -42,13 +42,11 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_dashboard);
 
-        // --- Khởi tạo giao diện ---
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         memberAdapter = new MemberAdapter(memberList);
         recyclerView.setAdapter(memberAdapter);
 
-        // --- Xử lý click item ---
         memberAdapter.setOnItemClickListener((userMed, position) -> {
             String docId = docIds.get(position);
             Intent i = new Intent(ManagerDashboardActivity.this, UserMedicineActivity.class);
@@ -61,13 +59,10 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         fabAdd = findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(v -> showAddMemberDialog());
 
-        // --- Khởi tạo DAO ---
         userMedicineDAO = new UserMedicineDAO();
 
-        // --- Lấy userId từ Intent ---
         String currentUserId = getIntent().getStringExtra("userId");
 
-        // --- Lắng nghe thay đổi dữ liệu qua DAO ---
         listenerRegistration = userMedicineDAO.listenAll(currentUserId, new UserMedicineDAO.UserMedicineListener() {
             @Override
             public void onDataChange(List<UserMedicine> users, List<String> ids) {
@@ -97,7 +92,9 @@ public class ManagerDashboardActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 return true;
             } else if (id == R.id.nav_list) {
-                startActivity(new Intent(this, MedicineActivity.class));
+                Intent i = new Intent(this, MedicineActivity.class);
+                i.putExtra("userId", getIntent().getStringExtra("userId"));
+                startActivity(i);
                 return true;
             }
             return false;
@@ -118,14 +115,10 @@ public class ManagerDashboardActivity extends AppCompatActivity {
                     String phone = edtPhone.getText().toString().trim();
 
                     if (!name.isEmpty() && !phone.isEmpty()) {
-                        // 🔹 Lấy ID người dùng hiện tại
                         String currentUserId = getIntent().getStringExtra("userId");
-                        Log.d("AddMember", "✅ currentUserId from Intent: " + currentUserId);
-                        // 🔹 Tạo đối tượng và gán userId
                         UserMedicine newUser = new UserMedicine(name, phone);
                         newUser.setUserId(currentUserId);
 
-                        // 🔹 Thêm vào Firestore qua DAO
                         userMedicineDAO.addUserMedicine(currentUserId, newUser, new UserMedicineDAO.AddUserCallback() {
                             @Override
                             public void onSuccess() {

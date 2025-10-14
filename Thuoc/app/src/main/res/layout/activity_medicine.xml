@@ -18,7 +18,7 @@
         android:padding="16dp"
         android:background="#F3F3F3" />
 
-    <!-- Danh sách -->
+    <!-- Danh sách thuốc -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewMedicine"
         android:layout_width="match_parent"
@@ -27,8 +27,21 @@
         android:layout_above="@id/bottomNavigation"
         android:padding="16dp" />
 
+    <!-- 🔴 Nút XÓA thuốc (màu đỏ), nằm trên nút Thêm -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabDeleteMedicine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_above="@id/fabAddMedicine"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:srcCompat="@android:drawable/ic_menu_delete"
+        app:tint="@android:color/white"
+        android:backgroundTint="@android:color/holo_red_dark"
+        android:contentDescription="Xóa thuốc đã chọn" />
 
-    <!-- Floating Action Button màu xanh lá (Thêm thành viên) -->
+    <!-- 🟢 Nút THÊM thuốc -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddMedicine"
         android:layout_width="wrap_content"
@@ -39,7 +52,8 @@
         android:layout_marginBottom="16dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
-        android:backgroundTint="@android:color/holo_green_dark" />
+        android:backgroundTint="@android:color/holo_green_dark"
+        android:contentDescription="Thêm thuốc mới" />
 
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -53,7 +67,7 @@
         android:background="#EDE1F6"
         android:elevation="8dp" />
 
-    <!-- Nút Tài khoản tròn trồi lên ở giữa -->
+    <!-- Nút Tài khoản tròn nổi giữa -->
     <ImageButton
         android:id="@+id/btnAccount"
         android:layout_width="60dp"

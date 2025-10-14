@@ -3,6 +3,7 @@ package com.example.thuoc.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,11 +12,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.thuoc.R;
 import com.example.thuoc.model.Medicine;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.MedicineViewHolder> {
 
     private List<Medicine> medicineList;
+    private Set<String> selectedIds = new HashSet<>();
 
     public MedicineAdapter(List<Medicine> medicineList) {
         this.medicineList = medicineList;
@@ -32,9 +36,28 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
     @Override
     public void onBindViewHolder(@NonNull MedicineViewHolder holder, int position) {
         Medicine med = medicineList.get(position);
+
         holder.tvName.setText(med.getName());
         holder.tvQuantity.setText("Số lượng: " + med.getQuantity() + " " + med.getUnit());
         holder.tvExpiry.setText("HSD: " + med.getDescription());
+
+        // ✅ Đồng bộ trạng thái checkbox
+        holder.cbSelect.setOnCheckedChangeListener(null);
+        holder.cbSelect.setChecked(selectedIds.contains(med.getId()));
+
+        holder.cbSelect.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                selectedIds.add(med.getId());
+            } else {
+                selectedIds.remove(med.getId());
+            }
+        });
+
+        // ✅ Click toàn bộ item cũng toggle checkbox
+        holder.itemView.setOnClickListener(v -> {
+            boolean checked = !holder.cbSelect.isChecked();
+            holder.cbSelect.setChecked(checked);
+        });
     }
 
     @Override
@@ -44,17 +67,25 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
 
     static class MedicineViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvQuantity, tvExpiry;
+        CheckBox cbSelect;
 
         public MedicineViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvMedicineName);
             tvQuantity = itemView.findViewById(R.id.tvMedicineQuantity);
             tvExpiry = itemView.findViewById(R.id.tvMedicineExpiry);
+            cbSelect = itemView.findViewById(R.id.cbSelectMedicine);
         }
     }
 
+    // ✅ Cập nhật danh sách thuốc mới
     public void updateData(List<Medicine> newList) {
         this.medicineList = newList;
         notifyDataSetChanged();
+    }
+
+    // ✅ Lấy danh sách ID thuốc được chọn
+    public Set<String> getSelectedIds() {
+        return selectedIds;
     }
 }

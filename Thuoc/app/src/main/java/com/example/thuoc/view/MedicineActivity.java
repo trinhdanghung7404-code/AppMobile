@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class MedicineActivity extends AppCompatActivity {
 
@@ -31,7 +32,8 @@ public class MedicineActivity extends AppCompatActivity {
     private MedicineAdapter adapter;
     private List<Medicine> medicineList;
     private MedicineDAO medicineDAO;
-    private FirebaseFirestore db; // 🔹 thêm để truy cập Firestore cho auto ID
+    private FirebaseFirestore db;
+    private FloatingActionButton fabAdd, fabDelete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,18 +48,24 @@ public class MedicineActivity extends AppCompatActivity {
         recyclerViewMedicine.setAdapter(adapter);
 
         medicineDAO = new MedicineDAO();
-        db = FirebaseFirestore.getInstance(); // 🔹 khởi tạo Firestore
+        db = FirebaseFirestore.getInstance();
 
         loadMedicines();
 
-        FloatingActionButton fabAdd = findViewById(R.id.fabAddMedicine);
-        fabAdd.setOnClickListener(v -> showAddMedicineDialog());
+        // 🔹 Liên kết các nút FloatingActionButton
+        fabAdd = findViewById(R.id.fabAddMedicine);
+        fabDelete = findViewById(R.id.fabDeleteMedicine);
 
+        fabAdd.setOnClickListener(v -> showAddMedicineDialog());
+        fabDelete.setOnClickListener(v -> deleteSelectedMedicines());
+
+        // 🔹 Thanh điều hướng dưới
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
                 Intent i = new Intent(MedicineActivity.this, ManagerDashboardActivity.class);
+                i.putExtra("userId", getIntent().getStringExtra("userId"));
                 startActivity(i);
                 finish();
                 return true;
@@ -66,10 +74,10 @@ public class MedicineActivity extends AppCompatActivity {
             }
             return false;
         });
-
         bottomNav.setSelectedItemId(R.id.nav_list);
     }
 
+    // 🔹 Load danh sách thuốc
     private void loadMedicines() {
         medicineDAO.getAllMedicines(
                 newList -> adapter.updateData(newList),
@@ -77,6 +85,33 @@ public class MedicineActivity extends AppCompatActivity {
         );
     }
 
+    // 🗑️ Xoá thuốc được chọn
+    private void deleteSelectedMedicines() {
+        Set<String> selectedIds = adapter.getSelectedIds();
+        if (selectedIds.isEmpty()) {
+            Toast.makeText(this, "Chưa chọn thuốc để xoá", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Xóa thuốc")
+                .setMessage("Bạn có chắc muốn xoá " + selectedIds.size() + " thuốc đã chọn?")
+                .setPositiveButton("Xoá", (dialog, which) -> {
+                    for (String id : selectedIds) {
+                        db.collection("Medicine").document(id)
+                                .delete()
+                                .addOnSuccessListener(v ->
+                                        Toast.makeText(this, "Đã xoá thuốc ID " + id, Toast.LENGTH_SHORT).show())
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Lỗi khi xoá: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+                    selectedIds.clear();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    // ➕ Thêm thuốc (giữ nguyên logic của bạn)
     private void showAddMedicineDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_medicine, null);
 

@@ -31,19 +31,23 @@ public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAd
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_medicine, parent, false);
+                .inflate(R.layout.item_medicine_select, parent, false);
         return new ViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Medicine med = medicineList.get(position);
-        holder.tvName.setText(med.getName());   // hiển thị tên thuốc
+        Medicine m = medicineList.get(position);
+        holder.tvName.setText(m.getName());
+        holder.tvQuantity.setText("Số lượng: " + m.getQuantity() + " viên");
+        holder.tvExpiry.setText("HSD: " + m.getDescription());
 
-        // Nếu muốn hiển thị thêm mô tả thì mở comment
-        // holder.tvDescription.setText(med.getDescription());
-
-        holder.itemView.setOnClickListener(v -> listener.onMedicineClick(med));
+        // Bắt sự kiện click để chọn thuốc
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onMedicineClick(m);
+            }
+        });
     }
 
     @Override
@@ -57,12 +61,13 @@ public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAd
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName; // tvDescription;
+        TextView tvName, tvQuantity, tvExpiry;
 
         ViewHolder(View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvMedicineName);
-            // tvDescription = itemView.findViewById(R.id.tvMedicineDescription);
+            tvQuantity = itemView.findViewById(R.id.tvMedicineQuantity);
+            tvExpiry = itemView.findViewById(R.id.tvMedicineExpiry);
         }
     }
 }

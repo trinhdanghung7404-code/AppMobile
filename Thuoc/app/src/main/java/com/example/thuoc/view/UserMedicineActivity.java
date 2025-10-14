@@ -19,6 +19,9 @@ import android.app.TimePickerDialog;
 import com.example.thuoc.R;
 import com.example.thuoc.adapter.MedicineEntryAdapter;
 import com.example.thuoc.adapter.SelectMedicineAdapter;
+import com.example.thuoc.dao.MedicineDAO;
+import com.example.thuoc.dao.MedicineEntryDAO;
+import com.example.thuoc.dao.UserMedicineDAO;
 import com.example.thuoc.model.Medicine;
 import com.example.thuoc.model.MedicineEntry;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -32,6 +35,9 @@ public class UserMedicineActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private MedicineEntryAdapter adapter;
+    private final MedicineEntryDAO medDao = new MedicineEntryDAO();
+    private final MedicineDAO medicineDAO = new MedicineDAO();
+    private final UserMedicineDAO userMedicineDAO = new UserMedicineDAO();
     private FirebaseFirestore db;
     private String userId;
     private String userName; // tên user truyền sang
@@ -75,98 +81,46 @@ public class UserMedicineActivity extends AppCompatActivity {
     }
 
     private void loadUserMedicines(String userId) {
-        if (userId == null || userId.isEmpty()) return;
-
-        db.collection("UserMedicine")
-                .document(userId)
-                .collection("Medicines")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    List<MedicineEntry> newList = new ArrayList<>();
-                    for (DocumentSnapshot doc : querySnapshot) {
-                        MedicineEntry entry = doc.toObject(MedicineEntry.class);
-                        if (entry != null) {
-                            entry.setDocId(doc.getId());
-                            newList.add(entry);
-                        }
-                    }
-                    adapter.updateData(newList);
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi tải thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        medDao.getMedicinesByUserId(userId, list -> {
+            adapter.updateData(list);
+        }, e -> {
+            Toast.makeText(this, "Lỗi tải thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     /** Hiện dialog chọn thuốc từ collection Medicine */
     private void showSelectMedicineDialog() {
-        db.collection("Medicine")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    List<Medicine> medicineList = new ArrayList<>();
-                    for (DocumentSnapshot doc : querySnapshot) {
-                        Medicine m = doc.toObject(Medicine.class);
-                        if (m != null) {
-                            m.setId(doc.getId());
-                            medicineList.add(m);
-                        }
-                    }
 
-                    SelectMedicineAdapter selectAdapter = new SelectMedicineAdapter(medicineList, selected -> {
-                        addMedicineToUser(selected);
-                    });
+        medicineDAO.getMedicines(medicineList -> {
+            SelectMedicineAdapter adapter = new SelectMedicineAdapter(medicineList, selected -> {
+                addMedicineToUser(selected);
+            });
 
-                    RecyclerView rv = new RecyclerView(this);
-                    rv.setLayoutManager(new LinearLayoutManager(this));
-                    rv.setAdapter(selectAdapter);
+            RecyclerView rv = new RecyclerView(this);
+            rv.setLayoutManager(new LinearLayoutManager(this));
+            rv.setAdapter(adapter);
 
-                    new AlertDialog.Builder(this)
-                            .setTitle("Chọn thuốc để thêm")
-                            .setView(rv)
-                            .setNegativeButton("Đóng", null)
-                            .show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi tải danh sách thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+            new AlertDialog.Builder(this)
+                    .setTitle("Chọn thuốc để thêm")
+                    .setView(rv)
+                    .setNegativeButton("Đóng", null)
+                    .show();
+
+        }, e -> {
+            Toast.makeText(this, "Lỗi tải danh sách thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
     }
+
 
     /** Thêm thuốc vào subcollection Medicines (tránh trùng lặp) */
     private void addMedicineToUser(Medicine medicine) {
-        if (medicine == null || userId == null || userId.isEmpty()) return;
-
-        db.collection("UserMedicine")
-                .document(userId)
-                .collection("Medicines")
-                .whereEqualTo("name", medicine.getName()) // kiểm tra theo tên thuốc
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    if (!querySnapshot.isEmpty()) {
-                        // Đã tồn tại
-                        Toast.makeText(this, "Thuốc " + medicine.getName() + " đã được thêm trước đó", Toast.LENGTH_SHORT).show();
-                    } else {
-                        // Chưa có → thêm mới
-                        MedicineEntry entry = new MedicineEntry(
-                                medicine.getName(),
-                                "2 viên/ngày",
-                                "Sáng - Tối"
-                        );
-
-                        db.collection("UserMedicine")
-                                .document(userId)
-                                .collection("Medicines")
-                                .add(entry)
-                                .addOnSuccessListener(ref -> {
-                                    Toast.makeText(this, "Đã thêm thuốc cho " + userName, Toast.LENGTH_SHORT).show();
-                                    loadUserMedicines(userId);
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(this, "Lỗi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                });
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi kiểm tra thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        medDao.addMedicine(userId, medicine,
+                () -> {
+                    Toast.makeText(this, "Đã thêm thuốc cho " + userName, Toast.LENGTH_SHORT).show();
+                    loadUserMedicines(userId);
+                },
+                e -> Toast.makeText(this, "Lỗi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+        );
     }
 
     private void showMedicineDetailDialog(MedicineEntry entry) {
@@ -181,7 +135,7 @@ public class UserMedicineActivity extends AppCompatActivity {
         TextView tvTimes = dialogView.findViewById(R.id.tvMedTimes);
         Button btnAddTime = dialogView.findViewById(R.id.btnAddTime);
 
-        // Gán dữ liệu
+        // Gán dữ liệu thuốc
         tvName.setText(entry.getName());
         tvDosage.setText("Liều lượng: " + entry.getDosage());
         tvExpiry.setText("Ngày hết hạn: " +
@@ -207,29 +161,47 @@ public class UserMedicineActivity extends AppCompatActivity {
             tpd.show();
         });
 
-        new AlertDialog.Builder(this)
+        // 🔹 Tạo dialog chi tiết thuốc
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Chi tiết thuốc")
                 .setView(dialogView)
                 .setNegativeButton("Đóng", null)
-                .show();
+                .setNeutralButton("Xóa thuốc", null) // Đặt nút xóa thuốc
+                .create();
+
+        // 🔹 Sau khi show(), mới bắt sự kiện nút được
+        dialog.setOnShowListener(dlg -> {
+            Button btnDeleteMed = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+            btnDeleteMed.setOnClickListener(v -> {
+                new AlertDialog.Builder(this)
+                        .setTitle("Xác nhận xóa")
+                        .setMessage("Bạn có chắc muốn xóa thuốc \"" + entry.getName() + "\" không?")
+                        .setPositiveButton("Xóa", (d2, w2) -> {
+                            userMedicineDAO.deleteMedicine(userId, entry.getDocId(), () -> {
+                                Toast.makeText(this, "Đã xóa thuốc", Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }, e -> {
+                                Toast.makeText(this, "Lỗi khi xóa: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
+            });
+        });
+
+        dialog.show();
     }
+
 
     /** Hàm thêm giờ uống vào Firestore */
     private void addTimeToMedicine(String entryDocId, String newTime) {
-        if (userId == null || userId.isEmpty() || entryDocId == null || entryDocId.isEmpty()) return;
-
-        db.collection("UserMedicine")
-                .document(userId)
-                .collection("Medicines")
-                .document(entryDocId)
-                .update("times", FieldValue.arrayUnion(newTime))
-                .addOnSuccessListener(aVoid -> {
+        medDao.addTime(userId, entryDocId, newTime,
+                () -> {
                     Toast.makeText(this, "Đã thêm giờ uống " + newTime, Toast.LENGTH_SHORT).show();
-                    loadUserMedicines(userId); // reload danh sách
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Lỗi khi thêm giờ: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+                    loadUserMedicines(userId); // reload danh sách sau khi thêm
+                },
+                e -> Toast.makeText(this, "Lỗi khi thêm giờ: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+        );
     }
 
     /** Hiện dialog chỉnh sửa thông tin user */
@@ -241,23 +213,17 @@ public class UserMedicineActivity extends AppCompatActivity {
         Switch switchText = dialogView.findViewById(R.id.switchTextNotify);
         Switch switchVoice = dialogView.findViewById(R.id.switchVoiceNotify);
 
-        // Load dữ liệu hiện tại từ Firestore
-        db.collection("UserMedicine").document(userId).get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        String name = doc.getString("name");
-                        String phone = doc.getString("phone");
-                        Boolean textNotify = doc.getBoolean("textNotify");
-                        Boolean voiceNotify = doc.getBoolean("voiceNotify");
+        UserMedicineDAO userMedicineDAO = new UserMedicineDAO();
 
-                        etUserName.setText(name != null ? name : "");
-                        etUserPhone.setText(phone != null ? phone : "");
-                        switchText.setChecked(textNotify != null && textNotify);
-                        switchVoice.setChecked(voiceNotify != null && voiceNotify);
-                    }
-                });
+        // 🔹 Load thông tin user hiện tại
+        userMedicineDAO.getUserInfo(userId, user -> {
+            etUserName.setText(user.getUserName() != null ? user.getUserName() : "");
+            etUserPhone.setText(user.getPhone() != null ? user.getPhone() : "");
+            switchText.setChecked(user.isTextNotify());
+            switchVoice.setChecked(user.isVoiceNotify());
+        }, e -> Toast.makeText(this, "Lỗi tải thông tin: " + e.getMessage(), Toast.LENGTH_SHORT).show());
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Chỉnh sửa thông tin")
                 .setView(dialogView)
                 .setPositiveButton("Lưu", (d, w) -> {
@@ -266,24 +232,33 @@ public class UserMedicineActivity extends AppCompatActivity {
                     boolean textNotify = switchText.isChecked();
                     boolean voiceNotify = switchVoice.isChecked();
 
-                    db.collection("UserMedicine")
-                            .document(userId)
-                            .update(
-                                    "name", newName,
-                                    "phone", newPhone,
-                                    "textNotify", textNotify,
-                                    "voiceNotify", voiceNotify
-                            )
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(this, "Đã cập nhật thông tin", Toast.LENGTH_SHORT).show();
-                                tvTitle.setText("Danh sách thuốc của " + newName);
-                                userName = newName; // update lại userName
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                            );
+                    userMedicineDAO.updateUserInfo(userId, newName, newPhone, textNotify, voiceNotify, () -> {
+                        Toast.makeText(this, "Đã cập nhật thông tin", Toast.LENGTH_SHORT).show();
+                        tvTitle.setText("Danh sách thuốc của " + newName);
+                        userName = newName;
+                    }, e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 })
                 .setNegativeButton("Hủy", null)
-                .show();
+                .setNeutralButton("Xóa người dùng", null) // tạm để null để set custom handler
+                .create();
+
+        dialog.show();
+
+        // 🔹 Bắt sự kiện "Xóa người dùng"
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Xác nhận xóa")
+                    .setMessage("Bạn có chắc muốn xóa người dùng này không? Toàn bộ thuốc sẽ bị xóa.")
+                    .setPositiveButton("Xóa", (d2, w2) -> {
+                        userMedicineDAO.deleteUser(userId, () -> {
+                            Toast.makeText(this, "Đã xóa người dùng", Toast.LENGTH_SHORT).show();
+                            finish(); // đóng Activity sau khi xóa
+                        }, e -> {
+                            Toast.makeText(this, "Lỗi khi xóa: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
+        });
     }
 }
