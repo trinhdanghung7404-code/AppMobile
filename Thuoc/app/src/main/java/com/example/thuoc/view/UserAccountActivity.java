@@ -48,7 +48,6 @@ public class UserAccountActivity extends AppCompatActivity {
         ImageButton btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
 
-        // 🔹 Đăng xuất
         btnLogout.setOnClickListener(v -> {
             getSharedPreferences("USER_SESSION", MODE_PRIVATE)
                     .edit().clear().apply();

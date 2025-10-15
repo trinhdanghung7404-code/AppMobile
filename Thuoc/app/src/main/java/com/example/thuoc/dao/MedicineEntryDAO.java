@@ -1,5 +1,7 @@
 package com.example.thuoc.dao;
 
+import androidx.annotation.NonNull;
+
 import com.example.thuoc.model.Medicine;
 import com.example.thuoc.model.MedicineEntry;
 import com.google.firebase.firestore.*;
@@ -38,7 +40,6 @@ public class MedicineEntryDAO {
                     if (!qs.isEmpty()) {
                         onError.accept(new Exception("Thuốc đã tồn tại"));
                     } else {
-                        // ✅ Tạo đầy đủ dữ liệu
                         MedicineEntry entry = new MedicineEntry();
                         entry.setName(medicine.getName());
                         entry.setQuantity(medicine.getQuantity());
@@ -56,8 +57,7 @@ public class MedicineEntryDAO {
     }
 
 
-    // 🔹 Thêm giờ uống
-    public void addTime(String userId, String entryDocId, String newTime, Runnable onSuccess, Consumer<Exception> onError) {
+    public void addTime(String userId, String entryDocId, String timeStr, String dosageStr, Runnable onSuccess, @NonNull Consumer<Exception> onError) {
         DocumentReference docRef = db.collection("UserMedicine").document(userId)
                 .collection("Medicines").document(entryDocId);
 
@@ -69,7 +69,22 @@ public class MedicineEntryDAO {
 
                     MedicineEntry med = snapshot.toObject(MedicineEntry.class);
                     if (med.getTimes() == null) med.setTimes(new ArrayList<>());
-                    if (!med.getTimes().contains(newTime)) med.getTimes().add(newTime);
+
+                    // 🔹 Tạo map mới để lưu giờ + liều lượng
+                    boolean exists = false;
+                    for (java.util.Map<String, String> t : med.getTimes()) {
+                        if (t.get("time").equals(timeStr)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+
+                    if (!exists) {
+                        java.util.Map<String, String> newTime = new java.util.HashMap<>();
+                        newTime.put("time", timeStr);
+                        newTime.put("dosage", dosageStr);
+                        med.getTimes().add(newTime);
+                    }
 
                     transaction.set(docRef, med, SetOptions.merge());  // merge giữ các field khác
                     return null;

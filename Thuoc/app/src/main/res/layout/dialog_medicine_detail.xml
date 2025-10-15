@@ -14,15 +14,6 @@
         android:textSize="18sp"
         android:textColor="@android:color/black"/>
 
-    <!-- Liều lượng -->
-    <TextView
-        android:id="@+id/tvMedDosage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Liều lượng"
-        android:layout_marginTop="8dp"
-        android:textSize="16sp" />
-
     <!-- Ngày hết hạn -->
     <TextView
         android:id="@+id/tvMedExpiry"

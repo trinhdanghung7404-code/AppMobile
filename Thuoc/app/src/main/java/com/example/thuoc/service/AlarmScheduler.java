@@ -13,6 +13,7 @@ import com.example.thuoc.model.MedicineEntry;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Map;
 
 public class AlarmScheduler {
 
@@ -20,7 +21,8 @@ public class AlarmScheduler {
     public static void scheduleAlarmsForMedicine(Context context, MedicineEntry medicine) {
         if (medicine.getTimes() == null) return;
 
-        for (String timeStr : medicine.getTimes()) {
+        for (Map<String, String> timeEntry : medicine.getTimes()) {
+            String timeStr = timeEntry.get("time"); // lấy giờ
             try {
                 // Bỏ qua nếu không đúng định dạng HH:mm
                 if (!timeStr.matches("\\d{2}:\\d{2}")) {

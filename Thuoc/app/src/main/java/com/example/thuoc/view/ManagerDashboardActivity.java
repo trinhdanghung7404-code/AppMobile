@@ -33,7 +33,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     private final List<UserMedicine> memberList = new ArrayList<>();
     private final List<String> docIds = new ArrayList<>();
     private FloatingActionButton fabAdd;
-    private UserMedicineDAO userMedicineDAO;
+    private UserMedicineDAO umDAO;
     private ListenerRegistration listenerRegistration;
 
     @SuppressLint("NonConstantResourceId")
@@ -41,6 +41,8 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_dashboard);
+
+        umDAO = new UserMedicineDAO();
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -59,11 +61,9 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         fabAdd = findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(v -> showAddMemberDialog());
 
-        userMedicineDAO = new UserMedicineDAO();
-
         String currentUserId = getIntent().getStringExtra("userId");
 
-        listenerRegistration = userMedicineDAO.listenAll(currentUserId, new UserMedicineDAO.UserMedicineListener() {
+        listenerRegistration = umDAO.listenAll(currentUserId, new UserMedicineDAO.UserMedicineListener() {
             @Override
             public void onDataChange(List<UserMedicine> users, List<String> ids) {
                 memberList.clear();
@@ -101,7 +101,6 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         });
     }
 
-    // --- Thêm thành viên mới ---
     private void showAddMemberDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_member, null);
         EditText edtName = dialogView.findViewById(R.id.edtName);
@@ -119,7 +118,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
                         UserMedicine newUser = new UserMedicine(name, phone);
                         newUser.setUserId(currentUserId);
 
-                        userMedicineDAO.addUserMedicine(currentUserId, newUser, new UserMedicineDAO.AddUserCallback() {
+                        umDAO.addUserMedicine(currentUserId, newUser, new UserMedicineDAO.AddUserCallback() {
                             @Override
                             public void onSuccess() {
                                 Toast.makeText(ManagerDashboardActivity.this,

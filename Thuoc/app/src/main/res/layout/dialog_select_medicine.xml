@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -6,15 +5,19 @@
     android:padding="16dp">
 
     <TextView
+        android:id="@+id/tvDialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chọn thuốc từ hệ thống"
+        android:text="Danh sách thuốc"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:paddingBottom="8dp" />
+        android:paddingBottom="8dp"
+        android:gravity="center"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewSelectMedicine"
+        android:id="@+id/rvMedicines"
         android:layout_width="match_parent"
-        android:layout_height="300dp" />
+        android:layout_height="300dp"
+        android:scrollbars="vertical" />
+
 </LinearLayout>

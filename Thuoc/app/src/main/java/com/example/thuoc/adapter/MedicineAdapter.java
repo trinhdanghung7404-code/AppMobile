@@ -41,7 +41,6 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
         holder.tvQuantity.setText("Số lượng: " + med.getQuantity() + " " + med.getUnit());
         holder.tvExpiry.setText("HSD: " + med.getDescription());
 
-        // ✅ Đồng bộ trạng thái checkbox
         holder.cbSelect.setOnCheckedChangeListener(null);
         holder.cbSelect.setChecked(selectedIds.contains(med.getId()));
 
@@ -78,13 +77,11 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
         }
     }
 
-    // ✅ Cập nhật danh sách thuốc mới
     public void updateData(List<Medicine> newList) {
         this.medicineList = newList;
         notifyDataSetChanged();
     }
 
-    // ✅ Lấy danh sách ID thuốc được chọn
     public Set<String> getSelectedIds() {
         return selectedIds;
     }

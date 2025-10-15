@@ -1,8 +1,10 @@
 package com.example.thuoc.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import com.google.firebase.firestore.Exclude;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MedicineEntry {
     private String name;
@@ -10,16 +12,21 @@ public class MedicineEntry {
     private String note;
     private int quantity;
     private String expiryDate;
-    private List<String> times; // danh sách giờ uống, vd ["08:00", "20:00"]
+
+    // times: Danh sách các map chứa { "time": "10:00", "dosage": "1 viên" }
+    private List<Map<String, String>> times;
 
     @Exclude
     private String docId;
 
-    public MedicineEntry() {}
+    public MedicineEntry() {
+        this.times = new ArrayList<>();
+    }
 
-    // Full constructor
+    // 🔹 Full constructor
     public MedicineEntry(String name, String dosage, String note,
-                         int quantity, String expiryDate, List<String> times) {
+                         int quantity, String expiryDate,
+                         List<Map<String, String>> times) {
         this.name = name;
         this.dosage = dosage;
         this.note = note;
@@ -28,20 +35,24 @@ public class MedicineEntry {
         this.times = times != null ? times : new ArrayList<>();
     }
 
-    // Convenience constructor (3 args)
-    public MedicineEntry(String name, String dosage, String timeStr) {
+    // 🔹 Convenience constructor (giờ + liều lượng)
+    public MedicineEntry(String name, String dosage, String time, String dose) {
         this.name = name;
         this.dosage = dosage;
         this.note = "";
         this.quantity = 0;
         this.expiryDate = null;
         this.times = new ArrayList<>();
-        if (timeStr != null && !timeStr.isEmpty()) {
-            this.times.add(timeStr);
+
+        if (time != null && dose != null) {
+            Map<String, String> timeMap = new HashMap<>();
+            timeMap.put("time", time);
+            timeMap.put("dosage", dose);
+            this.times.add(timeMap);
         }
     }
 
-    // getters / setters
+    // --- Getters & Setters ---
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
@@ -57,10 +68,9 @@ public class MedicineEntry {
     public String getExpiryDate() { return expiryDate; }
     public void setExpiryDate(String expiryDate) { this.expiryDate = expiryDate; }
 
-    public List<String> getTimes() { return times; }
-    public void setTimes(List<String> times) { this.times = times; }
+    public List<Map<String, String>> getTimes() { return times; }
+    public void setTimes(List<Map<String, String>> times) { this.times = times; }
 
-    // docId (không lưu lên Firestore)
     @Exclude
     public String getDocId() { return docId; }
     @Exclude

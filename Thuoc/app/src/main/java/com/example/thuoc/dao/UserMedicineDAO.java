@@ -25,8 +25,6 @@ public class UserMedicineDAO {
             return null;
         }
 
-        Log.d("UserMedicineDAO", "👂 ListenAll userId = " + userId);
-
         return db.collection("UserMedicine")
                 .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, e) -> {
@@ -53,27 +51,33 @@ public class UserMedicineDAO {
                 });
     }
 
-    // 🔹 Thêm mới UserMedicine cho userId cụ thể
-    public void addUserMedicine(String userId, UserMedicine medicine, AddUserCallback callback) {
+    public void addUserMedicine(String userId, UserMedicine usermedicine, AddUserCallback callback) {
         if (userId == null || userId.isEmpty()) {
             if (callback != null) callback.onFailure(new Exception("UserId bị trống"));
             return;
         }
 
-        medicine.setUserId(userId);
+        usermedicine.setUserId(userId);
 
-        String docId = String.valueOf(System.currentTimeMillis());
-        db.collection("UserMedicine").document(docId)
-                .set(medicine)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("UserMedicineDAO", "✅ Added user medicine for userId = " + userId);
-                    if (callback != null) callback.onSuccess();
+        db.collection("UserMedicine")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    int nextId = querySnapshot.size() + 1;
+                    String docId = String.valueOf(nextId);
+
+                    db.collection("UserMedicine")
+                            .document(docId)
+                            .set(usermedicine)
+                            .addOnSuccessListener(aVoid -> {
+                                if (callback != null) callback.onSuccess();
+                            })
+                            .addOnFailureListener(e -> {
+                                if (callback != null) callback.onFailure(e);
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("UserMedicineDAO", "❌ Add failed: " + e.getMessage());
                     if (callback != null) callback.onFailure(e);
                 });
-
     }
 
     // 🔹 Lấy thông tin UserMedicine theo userId

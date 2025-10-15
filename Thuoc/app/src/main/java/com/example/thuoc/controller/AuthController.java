@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.widget.Toast;
 
 import com.example.thuoc.model.User;
-import com.example.thuoc.view.HomeActivity;
 import com.example.thuoc.view.ManagerDashboardActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
