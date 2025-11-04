@@ -9,6 +9,7 @@ import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class UserMedicineDAO {
@@ -133,11 +134,9 @@ public class UserMedicineDAO {
             return;
         }
 
-        // Xóa document chính
         db.collection("UserMedicine").document(userId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    // Xóa luôn collection "Medicines" con (nếu có)
                     db.collection("UserMedicine").document(userId)
                             .collection("Medicines")
                             .get()
@@ -175,6 +174,43 @@ public class UserMedicineDAO {
                 .addOnFailureListener(e -> {
                     if (onFailure != null) onFailure.onFailure(e);
                 });
+    }
+    public void getMedicinesByUserId(String userId, Consumer<List<MedicineEntry>> onSuccess, Consumer<Exception> onFailure) {
+        db.collection("UserMedicine")
+                .document(userId)
+                .collection("Medicines")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<MedicineEntry> medicines = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        MedicineEntry med = doc.toObject(MedicineEntry.class);
+                        if (med != null) {
+                            med.setDocId(doc.getId());
+                            medicines.add(med);
+                        }
+                    }
+                    onSuccess.accept(medicines);
+                })
+                .addOnFailureListener(onFailure::accept);
+    }
+    public void getNotificationSettings(String userId, BiConsumer<Boolean, Boolean> onSuccess, Consumer<Exception> onError) {
+        db.collection("UserMedicine").document(userId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        boolean textNotify = getBooleanSafe(doc, "textNotify");
+                        boolean voiceNotify = getBooleanSafe(doc, "voiceNotify");
+                        onSuccess.accept(textNotify, voiceNotify);
+                    } else {
+                        Log.w("UserDAO", "⚠️ Không tìm thấy document cho userId: " + userId);
+                        onSuccess.accept(false, false);
+                    }
+                })
+                .addOnFailureListener(onError::accept);
+    }
+
+    private boolean getBooleanSafe(DocumentSnapshot doc, String field) {
+        Boolean val = doc.getBoolean(field);
+        return val != null && val;
     }
     // Callback interface
     public interface UserMedicineListener {

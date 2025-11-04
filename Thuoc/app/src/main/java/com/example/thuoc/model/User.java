@@ -5,7 +5,6 @@ public class User {
     private String name;
     private String phone;
     private String password;
-    private String role;     // "manager" hoặc "user"
 
     // Constructor rỗng cho Firebase
     public User() {}
@@ -17,12 +16,11 @@ public class User {
     }
 
     // Constructor đăng ký
-    public User(String id, String name, String phone, String password, String role) {
+    public User(String id, String name, String phone, String password) {
         this.id = id;
         this.name = name;
         this.phone = phone;
         this.password = password;
-        this.role = role;
     }
 
     // Getter & Setter
@@ -38,6 +36,4 @@ public class User {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
 }

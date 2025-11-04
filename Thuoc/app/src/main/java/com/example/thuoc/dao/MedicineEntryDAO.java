@@ -34,28 +34,32 @@ public class MedicineEntryDAO {
     // 🔹 Thêm thuốc mới
     public void addMedicine(String userId, Medicine medicine, Runnable onSuccess, Consumer<Exception> onError) {
         db.collection("UserMedicine").document(userId).collection("Medicines")
-                .whereEqualTo("name", medicine.getName())
                 .get()
                 .addOnSuccessListener(qs -> {
-                    if (!qs.isEmpty()) {
-                        onError.accept(new Exception("Thuốc đã tồn tại"));
-                    } else {
-                        MedicineEntry entry = new MedicineEntry();
-                        entry.setName(medicine.getName());
-                        entry.setQuantity(medicine.getQuantity());
-                        entry.setExpiryDate(medicine.getDescription());
-                        entry.setTimes(new ArrayList<>()); // bắt đầu với danh sách trống
+                    int newId = qs.size() + 1;
+                    boolean exists = qs.getDocuments().stream()
+                            .anyMatch(doc -> medicine.getName().equalsIgnoreCase(doc.getString("name")));
 
-                        db.collection("UserMedicine").document(userId)
-                                .collection("Medicines")
-                                .add(entry)
-                                .addOnSuccessListener(r -> onSuccess.run())
-                                .addOnFailureListener(onError::accept);
+                    if (exists) {
+                        onError.accept(new Exception("Thuốc đã tồn tại"));
+                        return;
                     }
+
+                    MedicineEntry entry = new MedicineEntry();
+                    entry.setDocId(String.valueOf(newId));
+                    entry.setName(medicine.getName());
+                    entry.setMedicineId(medicine.getId());
+                    entry.setTimes(new ArrayList<>());
+
+                    db.collection("UserMedicine").document(userId)
+                            .collection("Medicines")
+                            .document(String.valueOf(newId))
+                            .set(entry)
+                            .addOnSuccessListener(r -> onSuccess.run())
+                            .addOnFailureListener(onError::accept);
                 })
                 .addOnFailureListener(onError::accept);
     }
-
 
     public void addTime(String userId, String entryDocId, String timeStr, String dosageStr, Runnable onSuccess, @NonNull Consumer<Exception> onError) {
         DocumentReference docRef = db.collection("UserMedicine").document(userId)
@@ -70,7 +74,6 @@ public class MedicineEntryDAO {
                     MedicineEntry med = snapshot.toObject(MedicineEntry.class);
                     if (med.getTimes() == null) med.setTimes(new ArrayList<>());
 
-                    // 🔹 Tạo map mới để lưu giờ + liều lượng
                     boolean exists = false;
                     for (java.util.Map<String, String> t : med.getTimes()) {
                         if (t.get("time").equals(timeStr)) {
@@ -78,7 +81,6 @@ public class MedicineEntryDAO {
                             break;
                         }
                     }
-
                     if (!exists) {
                         java.util.Map<String, String> newTime = new java.util.HashMap<>();
                         newTime.put("time", timeStr);

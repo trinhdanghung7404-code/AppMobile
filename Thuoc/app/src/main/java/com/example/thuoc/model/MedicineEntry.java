@@ -6,42 +6,41 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MedicineEntry {
-    private String name;
-    private String dosage;
-    private String note;
-    private int quantity;
-    private String expiryDate;
+public class MedicineEntry extends Medicine {
 
-    // times: Danh sách các map chứa { "time": "10:00", "dosage": "1 viên" }
-    private List<Map<String, String>> times;
+    private String dosage;        // Liều lượng thực tế mà user dùng
+    private String note;          // Ghi chú cá nhân (ví dụ: uống sau bữa ăn)
+    private String expiryDate;    // Hạn sử dụng riêng cho người dùng (nếu có)
+    private String medicineId;    // 🔹 Liên kết đến ID thuốc trong collection "Medicines"
+    private List<Map<String, String>> times; // { "time": "10:00", "dosage": "1 viên" }
 
     @Exclude
-    private String docId;
+    private String docId; // ID Firestore của document này (nội bộ app)
 
     public MedicineEntry() {
+        super();
         this.times = new ArrayList<>();
     }
 
-    // 🔹 Full constructor
-    public MedicineEntry(String name, String dosage, String note,
-                         int quantity, String expiryDate,
+    // 🔹 Constructor đầy đủ
+    public MedicineEntry(String id, String name, String description, int quantity, String unit,
+                         String dosage, String note, String expiryDate, String medicineId,
                          List<Map<String, String>> times) {
-        this.name = name;
+        super(id, name, description, quantity, unit);
         this.dosage = dosage;
         this.note = note;
-        this.quantity = quantity;
         this.expiryDate = expiryDate;
+        this.medicineId = medicineId;
         this.times = times != null ? times : new ArrayList<>();
     }
 
-    // 🔹 Convenience constructor (giờ + liều lượng)
+    // 🔹 Constructor tiện lợi (chỉ có giờ và liều)
     public MedicineEntry(String name, String dosage, String time, String dose) {
-        this.name = name;
+        super(null, name, null, 0, null);
         this.dosage = dosage;
         this.note = "";
-        this.quantity = 0;
         this.expiryDate = null;
+        this.medicineId = null;
         this.times = new ArrayList<>();
 
         if (time != null && dose != null) {
@@ -53,20 +52,17 @@ public class MedicineEntry {
     }
 
     // --- Getters & Setters ---
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
     public String getDosage() { return dosage; }
     public void setDosage(String dosage) { this.dosage = dosage; }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
 
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
-
     public String getExpiryDate() { return expiryDate; }
     public void setExpiryDate(String expiryDate) { this.expiryDate = expiryDate; }
+
+    public String getMedicineId() { return medicineId; }  // ✅ getter cho medicineId
+    public void setMedicineId(String medicineId) { this.medicineId = medicineId; } // ✅ setter
 
     public List<Map<String, String>> getTimes() { return times; }
     public void setTimes(List<Map<String, String>> times) { this.times = times; }

@@ -51,7 +51,6 @@ public class UserMedicineActivity extends AppCompatActivity {
 
         userId = getIntent().getStringExtra("userId");
         userName = getIntent().getStringExtra("userName");
-
         tvTitle = findViewById(R.id.tvTitleUserMedicine);
         if (userName != null) {
             tvTitle.setText("Danh sách thuốc của " + userName);
@@ -142,13 +141,11 @@ public class UserMedicineActivity extends AppCompatActivity {
         }
         tvTimes.setText("Giờ & liều lượng:" + times.toString());
 
-
         btnAddTime.setOnClickListener(v -> {
             TimePickerDialog tpd = new TimePickerDialog(this,
                     (view, hourOfDay, minute) -> {
                         String hh = String.format("%02d:%02d", hourOfDay, minute);
 
-                        // 🔹 Chỉ hiển thị dialog nhập liều lượng một lần tại đây
                         EditText input = new EditText(this);
                         input.setHint("Nhập liều lượng, ví dụ: 1 viên");
 
@@ -158,7 +155,6 @@ public class UserMedicineActivity extends AppCompatActivity {
                                 .setPositiveButton("Lưu", (d, w) -> {
                                     String dosage = input.getText().toString().trim();
                                     if (!dosage.isEmpty()) {
-                                        // Gọi DAO để lưu
                                         meDAO.addTime(userId, entry.getDocId(), hh, dosage,
                                                 () -> {
                                                     Toast.makeText(this, "Đã thêm: " + hh + " - " + dosage, Toast.LENGTH_SHORT).show();
@@ -203,21 +199,9 @@ public class UserMedicineActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void addTimeToMedicine(String entryDocId, String time, String dosage) {
-        meDAO.addTime(userId, entryDocId, time, dosage,
-                () -> {
-                    Toast.makeText(this, "Đã thêm: " + time + " - " + dosage, Toast.LENGTH_SHORT).show();
-                    loadUserMedicines(userId);
-                },
-                e -> Toast.makeText(this, "Lỗi khi thêm giờ: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-        );
-    }
-
-
-
     private void showEditUserDialog() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_user, null);
 
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_user, null);
         EditText etUserName = dialogView.findViewById(R.id.etUserName);
         EditText etUserPhone = dialogView.findViewById(R.id.etUserPhone);
         Switch switchText = dialogView.findViewById(R.id.switchTextNotify);
@@ -225,7 +209,6 @@ public class UserMedicineActivity extends AppCompatActivity {
 
         UserMedicineDAO userMedicineDAO = new UserMedicineDAO();
 
-        // 🔹 Load thông tin user hiện tại
         userMedicineDAO.getUserInfo(userId, user -> {
             etUserName.setText(user.getUserName() != null ? user.getUserName() : "");
             etUserPhone.setText(user.getPhone() != null ? user.getPhone() : "");
@@ -249,7 +232,7 @@ public class UserMedicineActivity extends AppCompatActivity {
                     }, e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 })
                 .setNegativeButton("Hủy", null)
-                .setNeutralButton("Xóa người dùng", null) // tạm để null để set custom handler
+                .setNeutralButton("Xóa người dùng", null)
                 .create();
 
         dialog.show();
@@ -261,7 +244,7 @@ public class UserMedicineActivity extends AppCompatActivity {
                     .setPositiveButton("Xóa", (d2, w2) -> {
                         userMedicineDAO.deleteUser(userId, () -> {
                             Toast.makeText(this, "Đã xóa người dùng", Toast.LENGTH_SHORT).show();
-                            finish(); // đóng Activity sau khi xóa
+                            finish();
                         }, e -> {
                             Toast.makeText(this, "Lỗi khi xóa: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });

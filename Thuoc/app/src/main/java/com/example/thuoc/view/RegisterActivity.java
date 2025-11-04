@@ -14,7 +14,6 @@ import com.example.thuoc.util.Constants;
 public class RegisterActivity extends AppCompatActivity {
 
     private AuthController authController;
-    private String role; // lưu role từ Intent
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,10 +21,6 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         authController = new AuthController();
-
-        // Lấy role từ Intent (được truyền từ MainActivity -> LoginActivity -> RegisterActivity)
-        role = getIntent().getStringExtra(Constants.EXTRA_ROLE);
-        if (role == null) role = Constants.ROLE_USER; // mặc định nếu không có
 
         EditText etFullName = findViewById(R.id.etFullName);
         EditText etPhone = findViewById(R.id.etPhone);
@@ -41,7 +36,7 @@ public class RegisterActivity extends AppCompatActivity {
             String confirm = etConfirmPassword.getText().toString().trim();
 
             // Truyền role sang AuthController
-            authController.registerUser(this, fullName, phone, pass, confirm, role);
+            authController.registerUser(this, fullName, phone, pass, confirm);
         });
 
         tvGoLogin.setOnClickListener(v -> {

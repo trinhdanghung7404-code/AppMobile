@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class MedicineDAO {
-    private final FirebaseFirestore db;
+    private static FirebaseFirestore db = null;
 
     public MedicineDAO() {
         db = FirebaseFirestore.getInstance();
@@ -52,7 +52,6 @@ public class MedicineDAO {
         db.collection("Medicine")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    // Đếm số lượng document hiện tại => gán ID mới
                     int newId = querySnapshot.size() + 1;
                     String id = String.valueOf(newId);
                     med.setId(id);
@@ -94,5 +93,42 @@ public class MedicineDAO {
                     Log.e("MedicineDAO", "❌ Load failed: " + e.getMessage());
                     if (onFailure != null) onFailure.accept(e);
                 });
+    }
+    public static void subtractMedicineFromUser(String userMedDocId, String medId, String dosage) {
+        if (medId == null || medId.isEmpty()) {
+            Log.e("MedicineDAO", "❌ medId null/rỗng — không thể trừ thuốc");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference docRef = db.collection("Medicine").document(medId); // ✅ đúng vị trí Firestore hiện tại
+
+        docRef.get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                Double qtyDouble = doc.getDouble("quantity");
+                double currentQty = (qtyDouble != null) ? qtyDouble : 0.0;
+
+                double dosageValue = extractDosageValue(dosage); // Ví dụ: "1 viên" -> 1.0
+                double newQuantity = Math.max(0, currentQty - dosageValue);
+
+                docRef.update("quantity", newQuantity)
+                        .addOnSuccessListener(aVoid -> Log.d("MedicineDAO",
+                                String.format("✅ Đã trừ %.2f thuốc (ID: %s). Còn lại: %.2f",
+                                        dosageValue, medId, newQuantity)))
+                        .addOnFailureListener(e ->
+                                Log.e("MedicineDAO", "❌ Lỗi khi cập nhật số lượng: " + e.getMessage()));
+            } else {
+                Log.w("MedicineDAO", "⚠️ Không tìm thấy thuốc: " + medId + " trong collection Medicine");
+            }
+        }).addOnFailureListener(e ->
+                Log.e("MedicineDAO", "🔥 Lỗi Firestore khi đọc thuốc: " + e.getMessage()));
+    }
+    private static int extractDosageValue(String dosage) {
+        try {
+            return Integer.parseInt(dosage.replaceAll("[^0-9]", "").trim());
+        } catch (Exception e) {
+            Log.w("MedicineDAO", "⚠️ Không đọc được số từ dosage: " + dosage + ", mặc định trừ 1");
+            return 1;
+        }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
 
+import com.example.thuoc.dao.UserDAO;
 import com.example.thuoc.model.User;
 import com.example.thuoc.view.ManagerDashboardActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -41,7 +42,6 @@ public class AuthController {
         intent.putExtra("userId", user.getId());
         intent.putExtra("fullName", user.getName());
         intent.putExtra("phone", user.getPhone());
-        intent.putExtra("role", user.getRole());
 
         // Xóa back stack
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -50,7 +50,7 @@ public class AuthController {
 
     // 🔹 Đăng ký
     // Đăng ký
-    public void registerUser(Context context, String fullName, String phone, String pass, String confirm, String role) {
+    public void registerUser(Context context, String fullName, String phone, String pass, String confirm) {
         if (fullName.isEmpty() || phone.isEmpty() || pass.isEmpty() || confirm.isEmpty()) {
             Toast.makeText(context, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
             return;
@@ -71,10 +71,9 @@ public class AuthController {
 
                         // 👉 Tạo user mới, chưa có id
                         User user = new User(fullName, phone, hashedPass);
-                        user.setRole(role);
 
                         // 👉 Dùng UserDao để thêm user (id = số thứ tự)
-                        new com.example.thuoc.dao.UserDao().addUser(user);
+                        new UserDAO().addUser(user);
 
                         Toast.makeText(context, "Đăng ký thành công", Toast.LENGTH_SHORT).show();
                     }

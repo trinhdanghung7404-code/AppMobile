@@ -6,11 +6,13 @@ import androidx.annotation.NonNull;
 
 import com.example.thuoc.model.User;
 import com.google.firebase.firestore.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-public class UserDao {
+public class UserDAO {
     private FirebaseFirestore db;
 
-    public UserDao() {
+    public UserDAO() {
         db = FirebaseFirestore.getInstance();
     }
 

@@ -39,7 +39,7 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
 
         holder.tvName.setText(med.getName());
         holder.tvQuantity.setText("Số lượng: " + med.getQuantity() + " " + med.getUnit());
-        holder.tvExpiry.setText("HSD: " + med.getDescription());
+        holder.tvExpiry.setText("HSD: " + med.getExpiryDate());
 
         holder.cbSelect.setOnCheckedChangeListener(null);
         holder.cbSelect.setChecked(selectedIds.contains(med.getId()));

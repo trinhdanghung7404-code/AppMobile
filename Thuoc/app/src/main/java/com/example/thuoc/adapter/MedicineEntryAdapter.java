@@ -51,9 +51,7 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
         if (med == null) return;
 
         holder.tvName.setText(med.getName());
-        holder.tvDosage.setText("Liều lượng mặc định: " + med.getDosage());
 
-        // 🔹 Hiển thị danh sách giờ uống + liều lượng
         if (med.getTimes() != null && !med.getTimes().isEmpty()) {
             StringBuilder timeDisplay = new StringBuilder();
             for (Map<String, String> entry : med.getTimes()) {
@@ -80,12 +78,10 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
     }
 
     static class MedicineEntryViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvDosage, tvTime;
-
+        TextView tvName, tvTime;
         public MedicineEntryViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvMedicineName);
-            tvDosage = itemView.findViewById(R.id.tvMedicineDosage);
             tvTime = itemView.findViewById(R.id.tvMedicineTime);
         }
     }

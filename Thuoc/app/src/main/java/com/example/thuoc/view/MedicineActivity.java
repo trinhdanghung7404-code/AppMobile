@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -59,22 +61,27 @@ public class MedicineActivity extends AppCompatActivity {
         fabAdd.setOnClickListener(v -> showAddMedicineDialog());
         fabDelete.setOnClickListener(v -> deleteSelectedMedicines());
 
-        // 🔹 Thanh điều hướng dưới
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home) {
-                Intent i = new Intent(MedicineActivity.this, ManagerDashboardActivity.class);
-                i.putExtra("userId", getIntent().getStringExtra("userId"));
-                startActivity(i);
-                finish();
-                return true;
-            } else if (id == R.id.nav_list) {
-                return true;
-            }
-            return false;
+        LinearLayout navHome = findViewById(R.id.nav_home);
+        LinearLayout navTask = findViewById(R.id.nav_task);
+        ImageView btnAccount = findViewById(R.id.btnAccount);
+
+        navHome.setOnClickListener(v -> {
+            Intent i = new Intent(this, ManagerDashboardActivity.class);
+            i.putExtra("userId", getIntent().getStringExtra("userId"));
+            startActivity(i);
+            overridePendingTransition(0, 0);
         });
-        bottomNav.setSelectedItemId(R.id.nav_list);
+
+        navTask.setOnClickListener(v -> {
+            // Đang ở màn này nên không cần chuyển
+        });
+
+        btnAccount.setOnClickListener(v -> {
+            Intent i = new Intent(this, UserAccountActivity.class);
+            i.putExtra("userId", getIntent().getStringExtra("userId"));
+            startActivity(i);
+        });
+
     }
 
     // 🔹 Load danh sách thuốc

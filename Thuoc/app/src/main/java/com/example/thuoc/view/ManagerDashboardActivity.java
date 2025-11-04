@@ -7,6 +7,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -79,26 +81,26 @@ public class ManagerDashboardActivity extends AppCompatActivity {
             }
         });
 
-        ImageButton btnAccount = findViewById(R.id.btnAccount);
-        btnAccount.setOnClickListener(v -> {
-            Intent intent = new Intent(this, UserAccountActivity.class);
-            startActivity(intent);
+        LinearLayout navHome = findViewById(R.id.nav_home);
+        LinearLayout navTask = findViewById(R.id.nav_task);
+        ImageView btnAccount = findViewById(R.id.btnAccount);
+
+        navHome.setOnClickListener(v -> {
         });
 
-        // --- Bottom Navigation ---
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home) {
-                return true;
-            } else if (id == R.id.nav_list) {
-                Intent i = new Intent(this, MedicineActivity.class);
-                i.putExtra("userId", getIntent().getStringExtra("userId"));
-                startActivity(i);
-                return true;
-            }
-            return false;
+        navTask.setOnClickListener(v -> {
+            Intent i = new Intent(this, MedicineActivity.class);
+            i.putExtra("userId", getIntent().getStringExtra("userId"));
+            startActivity(i);
+            overridePendingTransition(0, 0); // Không hiệu ứng chuyển trang (tùy chọn)
         });
+
+        btnAccount.setOnClickListener(v -> {
+            Intent i = new Intent(this, UserAccountActivity.class);
+            i.putExtra("userId", getIntent().getStringExtra("userId"));
+            startActivity(i);
+        });
+
     }
 
     private void showAddMemberDialog() {

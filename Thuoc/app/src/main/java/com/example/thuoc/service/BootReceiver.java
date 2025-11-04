@@ -1,15 +1,19 @@
 package com.example.thuoc.service;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresPermission;
 
 import com.example.thuoc.model.MedicineEntry;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class BootReceiver extends BroadcastReceiver {
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     @Override
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
@@ -31,7 +35,7 @@ public class BootReceiver extends BroadcastReceiver {
                             for (QueryDocumentSnapshot doc : querySnapshot) {
                                 MedicineEntry med = doc.toObject(MedicineEntry.class);
                                 if (med != null) {
-                                    AlarmScheduler.scheduleAlarmsForMedicine(context, med);
+                                    AlarmScheduler.scheduleAlarmsForMedicine(context, med, userId);
                                 }
                             }
                         });

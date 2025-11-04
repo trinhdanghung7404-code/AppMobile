@@ -39,8 +39,8 @@ public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAd
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Medicine m = medicineList.get(position);
         holder.tvName.setText(m.getName());
-        holder.tvQuantity.setText("Số lượng: " + m.getQuantity() + " viên");
-        holder.tvExpiry.setText("HSD: " + m.getDescription());
+        holder.tvQuantity.setText("Số lượng: " + m.getQuantity() + m.getUnit());
+        holder.tvExpiry.setText("HSD: " + m.getExpiryDate());
 
         // Bắt sự kiện click để chọn thuốc
         holder.itemView.setOnClickListener(v -> {
@@ -62,7 +62,6 @@ public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAd
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvQuantity, tvExpiry;
-
         ViewHolder(View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvMedicineName);

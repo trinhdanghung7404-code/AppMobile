@@ -24,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_below="@id/tvTitleMedicine"
-        android:layout_above="@id/bottomNavigation"
+        android:layout_above="@id/bottomNavContainer"
         android:padding="16dp" />
 
     <!-- 🔴 Nút XÓA thuốc (màu đỏ), nằm trên nút Thêm -->
@@ -47,7 +47,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_above="@id/bottomNavigation"
+        android:layout_above="@id/bottomNavContainer"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         app:srcCompat="@android:drawable/ic_input_add"
@@ -55,29 +55,12 @@
         android:backgroundTint="@android:color/holo_green_dark"
         android:contentDescription="Thêm thuốc mới" />
 
-    <!-- Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
+    <!-- ✅ Include thanh bottom nav mới -->
+    <include
+        android:id="@+id/bottomNavContainer"
+        layout="@layout/layout_bottom_nav"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_alignParentBottom="true"
-        app:menu="@menu/bottom_nav_menu"
-        app:itemIconSize="40dp"
-        app:labelVisibilityMode="unlabeled"
-        android:background="#EDE1F6"
-        android:elevation="8dp" />
-
-    <!-- Nút Tài khoản tròn nổi giữa -->
-    <ImageButton
-        android:id="@+id/btnAccount"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="28dp"
-        android:background="@drawable/bg_circle_white"
-        android:src="@drawable/ic_account"
-        android:scaleType="centerInside"
-        android:elevation="16dp" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>
