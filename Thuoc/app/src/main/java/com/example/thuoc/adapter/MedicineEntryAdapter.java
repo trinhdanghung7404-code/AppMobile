@@ -1,5 +1,7 @@
 package com.example.thuoc.adapter;
 
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +39,10 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
         notifyDataSetChanged();
     }
 
+    public List<MedicineEntry> getCurrentList() {
+        return medicineList;
+    }
+
     @NonNull
     @Override
     public MedicineEntryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -53,15 +59,54 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
         holder.tvName.setText(med.getName());
 
         if (med.getTimes() != null && !med.getTimes().isEmpty()) {
-            StringBuilder timeDisplay = new StringBuilder();
+            SpannableStringBuilder timeDisplay = new SpannableStringBuilder();
+
             for (Map<String, String> entry : med.getTimes()) {
                 String time = entry.get("time");
                 String dose = entry.get("dosage");
+
                 if (time != null && dose != null) {
-                    timeDisplay.append(time).append(" - ").append(dose).append("\n");
+                    // "Giờ: "
+                    timeDisplay.append("Giờ: ");
+
+                    // 👉 Làm nổi phần thời gian
+                    int startTime = timeDisplay.length();
+                    timeDisplay.append(time);
+                    int endTime = timeDisplay.length();
+                    timeDisplay.setSpan(
+                            new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#1976D2")), // xanh lam
+                            startTime, endTime,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+                    timeDisplay.setSpan(
+                            new android.text.style.RelativeSizeSpan(1.5f), // to hơn 15%
+                            startTime, endTime,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+
+                    // " - Uống với liều lượng: "
+                    timeDisplay.append(" - Uống với liều lượng: ");
+
+                    // 👉 Làm nổi phần liều lượng
+                    int startDose = timeDisplay.length();
+                    timeDisplay.append(dose);
+                    int endDose = timeDisplay.length();
+                    timeDisplay.setSpan(
+                            new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#D32F2F")), // đỏ sậm
+                            startDose, endDose,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+                    timeDisplay.setSpan(
+                            new android.text.style.RelativeSizeSpan(1.15f), // to hơn 15%
+                            startDose, endDose,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+
+                    timeDisplay.append("\n");
                 }
             }
-            holder.tvTime.setText(timeDisplay.toString().trim());
+
+            holder.tvTime.setText(timeDisplay);
         } else {
             holder.tvTime.setText("Chưa có giờ uống");
         }

@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation("com.google.firebase:firebase-auth:23.0.0")
     implementation("com.google.firebase:firebase-firestore:25.0.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation(libs.firebase.database)
     implementation(libs.firebase.messaging)
     testImplementation(libs.junit)

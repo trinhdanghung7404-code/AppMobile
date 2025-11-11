@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
@@ -68,6 +69,12 @@
             android:name=".service.AlarmReceiver"
             android:enabled="true"
             android:exported="true" />
+
+        <service
+            android:name=".service.VoiceListenerService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
 
     </application>
 

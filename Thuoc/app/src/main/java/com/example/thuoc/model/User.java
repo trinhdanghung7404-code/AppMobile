@@ -1,7 +1,7 @@
 package com.example.thuoc.model;
 
 public class User {
-    private String id;          // 🔹 Đổi sang int để làm STT
+    private String id;
     private String name;
     private String phone;
     private String password;

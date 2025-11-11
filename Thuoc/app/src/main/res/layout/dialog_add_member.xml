@@ -1,26 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="wrap_content">
 
-    <!-- Tên thành viên (bắt buộc) -->
-    <EditText
-        android:id="@+id/edtName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Họ và tên"
-        android:inputType="textPersonName"
-        android:imeOptions="actionNext" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <!-- Số điện thoại (dùng để đăng nhập) -->
-    <EditText
-        android:id="@+id/edtPhone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Số điện thoại"
-        android:inputType="phone"
-        android:imeOptions="actionDone"
-        android:layout_marginTop="8dp"/>
-</LinearLayout>
+        <!-- Tên thành viên -->
+        <EditText
+            android:id="@+id/edtName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Họ và tên"
+            android:inputType="textPersonName"
+            android:imeOptions="actionNext" />
+
+        <!-- Số điện thoại -->
+        <EditText
+            android:id="@+id/edtPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Số điện thoại"
+            android:inputType="phone"
+            android:imeOptions="actionNext"
+            android:layout_marginTop="8dp" />
+
+        <!-- Nhóm avatar -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loại thành viên:"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="12dp"
+            android:textColor="#333"/>
+
+        <!-- ✅ Cho phép cuộn ngang nếu tràn -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:id="@+id/layoutAvatarOptions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/avtBoy"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_boy"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:contentDescription="Trẻ nam"
+                    android:layout_margin="4dp" />
+
+                <ImageView
+                    android:id="@+id/avtGirl"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_girl"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:contentDescription="Trẻ nữ"
+                    android:layout_margin="4dp" />
+
+                <ImageView
+                    android:id="@+id/avtMan"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_man"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:contentDescription="Người lớn nam"
+                    android:layout_margin="4dp" />
+
+                <ImageView
+                    android:id="@+id/avtWoman"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_woman"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:contentDescription="Người lớn nữ"
+                    android:layout_margin="4dp" />
+
+                <ImageView
+                    android:id="@+id/avtGrandpa"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_grandpa"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:contentDescription="Ông"
+                    android:layout_margin="4dp" />
+
+                <ImageView
+                    android:id="@+id/avtGrandma"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_grandma"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:contentDescription="Bà"
+                    android:layout_margin="4dp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+    </LinearLayout>
+</ScrollView>

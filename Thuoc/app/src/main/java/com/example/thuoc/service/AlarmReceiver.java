@@ -8,25 +8,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresPermission;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.thuoc.R;
 import com.example.thuoc.dao.MedicineDAO;
 import com.example.thuoc.dao.UserMedicineDAO;
 
-import java.util.Locale;
-
 public class AlarmReceiver extends BroadcastReceiver {
 
     private static final String TAG = "AlarmReceiver";
     private static final String CHANNEL_ID = "medicine_channel";
-    private static TextToSpeech tts;
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     @Override
@@ -35,7 +32,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         String action = intent.getAction();
 
-        // Hành động "Đã uống"
+        // 🔹 1️⃣ Nếu người dùng nhấn "Đã uống" trong thông báo
         if ("MARK_TAKEN".equals(action)) {
             String usermedId = intent.getStringExtra("usermedId");
             String dosage = intent.getStringExtra("dosage");
@@ -43,19 +40,16 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             if (usermedId != null && dosage != null && medicineDocId != null) {
                 new MedicineDAO().subtractMedicineFromUser(usermedId, medicineDocId, dosage);
-                Log.d(TAG, "Ghi nhận 'Đã uống': userMedId=" + usermedId + ", medicineDocId=" + medicineDocId + ", dosage=" + dosage);
+                Log.d(TAG, " Ghi nhận 'Đã uống': userMedId=" + usermedId + ", medicineDocId=" + medicineDocId + ", dosage=" + dosage);
                 Toast.makeText(context, "Đã ghi nhận bạn đã uống thuốc", Toast.LENGTH_SHORT).show();
 
-                //Hủy thông báo đang hiển thị
-                NotificationManagerCompat manager = NotificationManagerCompat.from(context);
-                manager.cancelAll(); // hoặc manager.cancel(notificationId);
+                NotificationManagerCompat.from(context).cancelAll();
             } else {
-                Log.e(TAG, "Thiếu dữ liệu khi xử lý MARK_TAKEN (usermedId, medicineDocId hoặc dosage null)");
+                Log.e(TAG, "Thiếu dữ liệu khi xử lý MARK_TAKEN");
                 Toast.makeText(context, "Không thể ghi nhận uống thuốc: dữ liệu thiếu", Toast.LENGTH_LONG).show();
             }
             return;
         }
-
 
         String medicineName = intent.getStringExtra("medicineName");
         String dosage = intent.getStringExtra("dosage");
@@ -70,10 +64,9 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         createNotificationChannel(context);
 
-        // Đọc cài đặt người dùng
         UserMedicineDAO usermedDAO = new UserMedicineDAO();
         usermedDAO.getNotificationSettings(usermedId, (textNotify, voiceNotify) -> {
-            Log.d(TAG, "textNotify=" + textNotify + ", voiceNotify=" + voiceNotify);
+            Log.d(TAG, "📣 Thông báo - text=" + textNotify + ", voice=" + voiceNotify);
 
             if (!textNotify && !voiceNotify) {
                 Log.d(TAG, "Người dùng tắt hết thông báo");
@@ -82,6 +75,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             String message = medicineName + " - " + dosage;
 
+            // 🔹 Hiển thị thông báo văn bản
             if (textNotify) {
                 Intent takenIntent = new Intent(context, AlarmReceiver.class);
                 takenIntent.setAction("MARK_TAKEN");
@@ -98,27 +92,30 @@ public class AlarmReceiver extends BroadcastReceiver {
 
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                         .setSmallIcon(android.R.drawable.ic_dialog_info)
-                        .setContentTitle("Nhắc uống thuốc")
+                        .setContentTitle("💊 Nhắc uống thuốc")
                         .setContentText(message)
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setAutoCancel(true)
                         .addAction(android.R.drawable.ic_input_add, "Đã uống", takenPendingIntent);
 
-                NotificationManagerCompat manager = NotificationManagerCompat.from(context);
-                manager.notify((int) System.currentTimeMillis(), builder.build());
+                NotificationManagerCompat.from(context)
+                        .notify((int) System.currentTimeMillis(), builder.build());
             }
 
+            // 🔹 Kích hoạt service lắng nghe giọng nói trong 10 phút
             if (voiceNotify) {
-                String speakText = "Đã đến giờ uống thuốc " + medicineName + ", liều dùng " + dosage;
-                if (tts == null) {
-                    tts = new TextToSpeech(context.getApplicationContext(), status -> {
-                        if (status == TextToSpeech.SUCCESS) {
-                            tts.setLanguage(new Locale("vi", "VN"));
-                            tts.speak(speakText, TextToSpeech.QUEUE_FLUSH, null, "MedicineTTS");
-                        }
-                    });
-                } else {
-                    tts.speak(speakText, TextToSpeech.QUEUE_FLUSH, null, "MedicineTTS");
+                try {
+                    Intent micIntent = new Intent(context, VoiceListenerService.class);
+                    micIntent.putExtra("usermedId", usermedId);
+                    micIntent.putExtra("medicineDocId", medicineDocId);
+                    micIntent.putExtra("dosage", dosage);
+                    micIntent.putExtra("duration", 10 * 60 * 1000); // ⏱ 10 phút
+
+                    ContextCompat.startForegroundService(context, micIntent);
+                    Log.d(TAG, "🎤 VoiceListenerService được bật trong 10 phút");
+
+                } catch (Exception e) {
+                    Log.e(TAG, "🔥 Lỗi khi bật VoiceListenerService: " + e.getMessage());
                 }
             }
 

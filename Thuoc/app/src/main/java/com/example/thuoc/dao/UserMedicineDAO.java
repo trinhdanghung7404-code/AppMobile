@@ -60,27 +60,59 @@ public class UserMedicineDAO {
 
         usermedicine.setUserId(userId);
 
+        // Nếu chưa có avatarType thì mặc định là "boy"
+        if (usermedicine.getAvatarType() == null || usermedicine.getAvatarType().isEmpty()) {
+            usermedicine.setAvatarType("boy");
+        }
+
+        // Kiểm tra số điện thoại đã tồn tại chưa
         db.collection("UserMedicine")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("phone", usermedicine.getPhone())
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    int nextId = querySnapshot.size() + 1;
-                    String docId = String.valueOf(nextId);
+                    if (!querySnapshot.isEmpty()) {
+                        if (callback != null)
+                            callback.onFailure(new Exception("Số điện thoại đã tồn tại"));
+                    } else {
+                        // Lấy tất cả document của userId để tính stt mới
+                        db.collection("UserMedicine")
+                                .whereEqualTo("userId", userId)
+                                .get()
+                                .addOnSuccessListener(allDocs -> {
+                                    int maxId = 0;
 
-                    db.collection("UserMedicine")
-                            .document(docId)
-                            .set(usermedicine)
-                            .addOnSuccessListener(aVoid -> {
-                                if (callback != null) callback.onSuccess();
-                            })
-                            .addOnFailureListener(e -> {
-                                if (callback != null) callback.onFailure(e);
-                            });
+                                    for (var doc : allDocs) {
+                                        try {
+                                            int currentId = Integer.parseInt(doc.getId());
+                                            if (currentId > maxId) maxId = currentId;
+                                        } catch (NumberFormatException ignored) {
+                                            // bỏ qua document có id không phải số
+                                        }
+                                    }
+
+                                    int nextId = maxId + 1;
+                                    String newDocId = String.valueOf(nextId);
+
+                                    db.collection("UserMedicine")
+                                            .document(newDocId)
+                                            .set(usermedicine)
+                                            .addOnSuccessListener(aVoid -> {
+                                                if (callback != null) callback.onSuccess();
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                if (callback != null) callback.onFailure(e);
+                                            });
+                                })
+                                .addOnFailureListener(e -> {
+                                    if (callback != null) callback.onFailure(e);
+                                });
+                    }
                 })
                 .addOnFailureListener(e -> {
                     if (callback != null) callback.onFailure(e);
                 });
     }
-
     // 🔹 Lấy thông tin UserMedicine theo userId
     public void getUserInfo(String userId, Consumer<UserMedicine> onSuccess, Consumer<Exception> onError) {
         if (userId == null || userId.isEmpty()) {

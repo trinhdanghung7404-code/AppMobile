@@ -1,7 +1,12 @@
 package com.example.thuoc.view;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,12 +24,14 @@ import android.app.TimePickerDialog;
 
 import com.example.thuoc.R;
 import com.example.thuoc.adapter.MedicineEntryAdapter;
+import com.example.thuoc.adapter.MemberAdapter;
 import com.example.thuoc.adapter.SelectMedicineAdapter;
 import com.example.thuoc.dao.MedicineDAO;
 import com.example.thuoc.dao.MedicineEntryDAO;
 import com.example.thuoc.dao.UserMedicineDAO;
 import com.example.thuoc.model.Medicine;
 import com.example.thuoc.model.MedicineEntry;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FieldValue;
@@ -37,6 +44,7 @@ public class UserMedicineActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private MedicineEntryAdapter adapter;
+    private MemberAdapter memberAdapter;
     private final MedicineEntryDAO meDAO = new MedicineEntryDAO();
     private final MedicineDAO mDAO = new MedicineDAO();
     private final UserMedicineDAO userMedicineDAO = new UserMedicineDAO();
@@ -44,6 +52,8 @@ public class UserMedicineActivity extends AppCompatActivity {
     private String userId;
     private String userName;
     private TextView tvTitle;
+    private String selectedAvatarType;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,9 +61,22 @@ public class UserMedicineActivity extends AppCompatActivity {
 
         userId = getIntent().getStringExtra("userId");
         userName = getIntent().getStringExtra("userName");
+
         tvTitle = findViewById(R.id.tvTitleUserMedicine);
+        TextView tvGreeting = findViewById(R.id.tvGreeting); // 🔹 thêm dòng này
+
         if (userName != null) {
-            tvTitle.setText("Danh sách thuốc của " + userName);
+            tvTitle.setText("Danh sách thuốc");
+
+            // 🔹 Hiển thị chào kèm tên in đậm
+            String text = "Xin chào, " + userName + "!";
+            SpannableString spannable = new SpannableString(text);
+            spannable.setSpan(new StyleSpan(Typeface.BOLD),
+                    10, 10 + userName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tvGreeting.setText(spannable);
+        } else {
+            tvGreeting.setText("Xin chào, người dùng!");
         }
 
         recyclerView = findViewById(R.id.recyclerViewUserMedicine);
@@ -68,11 +91,10 @@ public class UserMedicineActivity extends AppCompatActivity {
         adapter.setOnItemClickListener((entry, pos) -> showMedicineDetailDialog(entry));
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-
         findViewById(R.id.btnAddMedicine).setOnClickListener(v -> showSelectMedicineDialog());
-
         findViewById(R.id.btnEditUser).setOnClickListener(v -> showEditUserDialog());
     }
+
 
     private void loadUserMedicines(String userId) {
         meDAO.getMedicinesByUserId(userId, list -> {
@@ -81,19 +103,37 @@ public class UserMedicineActivity extends AppCompatActivity {
             Toast.makeText(this, "Lỗi tải thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
-
     private void showSelectMedicineDialog() {
         mDAO.getMedicines(medicineList -> {
-            SelectMedicineAdapter adapter = new SelectMedicineAdapter(medicineList, selected -> {
-                addMedicineToUser(selected);
+            SelectMedicineAdapter selectAdapter = new SelectMedicineAdapter(medicineList, selected -> {
+                // 🔹 Cập nhật danh sách hiển thị ngay lập tức
+                if (adapter != null) {
+                    List<MedicineEntry> currentList = new ArrayList<>(adapter.getCurrentList());
+                    // Chuyển từ Medicine sang MedicineEntry
+                    MedicineEntry newEntry = new MedicineEntry();
+                    newEntry.setName(selected.getName());
+                    newEntry.setExpiryDate(selected.getExpiryDate());
+                    newEntry.setDocId(selected.getId());
+                    newEntry.setTimes(new ArrayList<>());
+                    currentList.add(newEntry);
+
+                    adapter.updateData(currentList);
+                }
+
+                // 🔹 Lưu lên Firestore nền
+                meDAO.addMedicine(userId, selected,
+                        () -> Toast.makeText(this, "Đã thêm thuốc cho " + userName, Toast.LENGTH_SHORT).show(),
+                        e -> Toast.makeText(this, "Lỗi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
             });
 
             View dialogView = getLayoutInflater().inflate(R.layout.dialog_select_medicine, null);
             RecyclerView rv = dialogView.findViewById(R.id.rvMedicines);
             rv.setLayoutManager(new LinearLayoutManager(this));
-            rv.setAdapter(adapter);
+            rv.setAdapter(selectAdapter);
 
             new AlertDialog.Builder(this)
+                    .setTitle("Chọn thuốc để thêm")
                     .setView(dialogView)
                     .setNegativeButton("Đóng", null)
                     .show();
@@ -142,6 +182,18 @@ public class UserMedicineActivity extends AppCompatActivity {
         tvTimes.setText("Giờ & liều lượng:" + times.toString());
 
         btnAddTime.setOnClickListener(v -> {
+            // Kiểm tra nếu đã đủ 4 lần uống
+            if (entry.getTimes() != null && entry.getTimes().size() >= 4) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Giới hạn giờ uống")
+                        .setMessage("Bạn đã đặt đủ 4 giờ uống cho thuốc này.\n" +
+                                "Vui lòng xóa bớt giờ cũ nếu muốn thêm mới.")
+                        .setPositiveButton("OK", null)
+                        .show();
+                return;
+            }
+
+            // Nếu chưa đủ 4 lần, cho phép thêm
             TimePickerDialog tpd = new TimePickerDialog(this,
                     (view, hourOfDay, minute) -> {
                         String hh = String.format("%02d:%02d", hourOfDay, minute);
@@ -172,8 +224,16 @@ public class UserMedicineActivity extends AppCompatActivity {
             tpd.show();
         });
 
+        TextView customTitle = new TextView(this);
+        customTitle.setText("Chi tiết thuốc");
+        customTitle.setPadding(40, 30, 40, 30);
+        customTitle.setTextSize(20);
+        customTitle.setTypeface(null, Typeface.BOLD);
+        customTitle.setTextColor(Color.WHITE);
+        customTitle.setBackgroundColor(Color.parseColor("#21244D"));
+
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Chi tiết thuốc")
+                .setCustomTitle(customTitle)
                 .setView(dialogView)
                 .setNegativeButton("Đóng", null)
                 .setNeutralButton("Xóa thuốc", null)
@@ -204,8 +264,8 @@ public class UserMedicineActivity extends AppCompatActivity {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_user, null);
         EditText etUserName = dialogView.findViewById(R.id.etUserName);
         EditText etUserPhone = dialogView.findViewById(R.id.etUserPhone);
-        Switch switchText = dialogView.findViewById(R.id.switchTextNotify);
-        Switch switchVoice = dialogView.findViewById(R.id.switchVoiceNotify);
+        SwitchMaterial switchText = dialogView.findViewById(R.id.switchTextNotify);
+        SwitchMaterial switchVoice = dialogView.findViewById(R.id.switchVoiceNotify);
 
         UserMedicineDAO userMedicineDAO = new UserMedicineDAO();
 
