@@ -22,7 +22,6 @@ public class MedicineDAO {
         db = FirebaseFirestore.getInstance();
     }
 
-    // Lắng nghe thay đổi danh sách thuốc (giữ nguyên)
     public ListenerRegistration getAllMedicines(Consumer<List<Medicine>> onSuccess,
                                                 Consumer<Exception> onError) {
         return db.collection("Medicine")
@@ -44,7 +43,6 @@ public class MedicineDAO {
                 });
     }
 
-    // 🔹 Thêm thuốc mới với ID tự tăng (1, 2, 3, ...)
     public void addMedicine(Medicine med,
                             Runnable onSuccess,
                             Consumer<Exception> onError) {
@@ -57,7 +55,7 @@ public class MedicineDAO {
                     med.setId(id);
 
                     db.collection("Medicine")
-                            .document(id) // documentId = "1", "2", "3", ...
+                            .document(id)
                             .set(med)
                             .addOnSuccessListener(aVoid -> {
                                 Log.d("MedicineDAO", "Thêm thuốc thành công, id = " + id);

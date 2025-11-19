@@ -7,9 +7,9 @@ public class Medicine {
     private int quantity;
     private String unit;
 
-    public Medicine() {} // Firebase cần constructor rỗng
+    public Medicine() {}
 
-    public Medicine(String id, String name, String description, int quantity, String unit) {
+    public Medicine(String id, String name, String expirydate, int quantity, String unit) {
         this.id = id;
         this.name = name;
         this.expirydate = expirydate;

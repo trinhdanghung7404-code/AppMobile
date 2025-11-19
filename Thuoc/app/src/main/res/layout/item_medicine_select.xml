@@ -5,7 +5,10 @@
     android:orientation="horizontal"
     android:padding="12dp"
     android:gravity="center_vertical"
-    android:background="?attr/selectableItemBackground">
+    android:background="@android:color/transparent"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
     <!-- Thông tin thuốc -->
     <LinearLayout

@@ -58,6 +58,8 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
 
         holder.tvName.setText(med.getName());
 
+        String medicineUnit = med.getUnit() != null ? med.getUnit() : "";
+
         if (med.getTimes() != null && !med.getTimes().isEmpty()) {
             SpannableStringBuilder timeDisplay = new SpannableStringBuilder();
 
@@ -69,7 +71,6 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
                     // "Giờ: "
                     timeDisplay.append("Giờ: ");
 
-                    // 👉 Làm nổi phần thời gian
                     int startTime = timeDisplay.length();
                     timeDisplay.append(time);
                     int endTime = timeDisplay.length();
@@ -91,6 +92,9 @@ public class MedicineEntryAdapter extends RecyclerView.Adapter<MedicineEntryAdap
                     int startDose = timeDisplay.length();
                     timeDisplay.append(dose);
                     int endDose = timeDisplay.length();
+                    if (!medicineUnit.isEmpty()) {
+                        timeDisplay.append(" ").append(medicineUnit);
+                    }
                     timeDisplay.setSpan(
                             new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#D32F2F")), // đỏ sậm
                             startDose, endDose,

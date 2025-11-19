@@ -53,7 +53,6 @@
         android:clipToPadding="false"
         android:layout_marginBottom="80dp" />
 
-    <!-- Nút thêm thành viên -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
@@ -64,10 +63,11 @@
         android:layout_marginBottom="16dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
-        android:backgroundTint="@android:color/holo_green_dark"
+        android:backgroundTint="#8549a7"
+        app:fabCustomSize="64dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.FAB"
         android:contentDescription="Thêm thành viên mới" />
 
-    <!-- Thanh điều hướng dưới -->
     <include
         android:id="@+id/bottomNavContainer"
         layout="@layout/layout_bottom_nav"

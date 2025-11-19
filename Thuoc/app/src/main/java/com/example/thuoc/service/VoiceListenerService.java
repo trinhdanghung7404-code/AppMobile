@@ -43,7 +43,7 @@ public class VoiceListenerService extends Service {
 
     private static final String TAG = "VoiceListenerService";
     private static final String CHANNEL_ID = "voice_listener_channel";
-    private static final String SERVER_URL = "ws://10.0.2.2:2700";
+    private static final String SERVER_URL = "ws://10.24.14.175:2700";
     private static final int SAMPLE_RATE = 16000;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;

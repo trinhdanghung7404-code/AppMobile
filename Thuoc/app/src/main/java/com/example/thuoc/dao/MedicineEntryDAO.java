@@ -33,31 +33,34 @@ public class MedicineEntryDAO {
 
     // 🔹 Thêm thuốc mới
     public void addMedicine(String userId, Medicine medicine, Runnable onSuccess, Consumer<Exception> onError) {
-        db.collection("UserMedicine").document(userId).collection("Medicines")
-                .get()
-                .addOnSuccessListener(qs -> {
-                    int newId = qs.size() + 1;
-                    boolean exists = qs.getDocuments().stream()
-                            .anyMatch(doc -> medicine.getName().equalsIgnoreCase(doc.getString("name")));
+        DocumentReference docRef = db.collection("UserMedicine")
+                .document(userId)
+                .collection("Medicines")
+                .document(medicine.getName().toLowerCase());
 
-                    if (exists) {
-                        onError.accept(new Exception("Thuốc đã tồn tại"));
-                        return;
+        db.runTransaction(transaction -> {
+                    DocumentSnapshot doc = transaction.get(docRef);
+
+                    if (doc.exists()) {
+                        throw new RuntimeException("Thuốc đã tồn tại");
                     }
 
                     MedicineEntry entry = new MedicineEntry();
-                    entry.setDocId(String.valueOf(newId));
+
+                    entry.setId(medicine.getId());
+                    entry.setExpiryDate(medicine.getExpiryDate());
+                    entry.setQuantity(medicine.getQuantity());
+                    entry.setUnit(medicine.getUnit());
+
+                    entry.setDocId(medicine.getName().toLowerCase()); // ID nội bộ (Exclude)
                     entry.setName(medicine.getName());
                     entry.setMedicineId(medicine.getId());
                     entry.setTimes(new ArrayList<>());
 
-                    db.collection("UserMedicine").document(userId)
-                            .collection("Medicines")
-                            .document(String.valueOf(newId))
-                            .set(entry)
-                            .addOnSuccessListener(r -> onSuccess.run())
-                            .addOnFailureListener(onError::accept);
+                    transaction.set(docRef, entry);
+                    return null;
                 })
+                .addOnSuccessListener(v -> onSuccess.run())
                 .addOnFailureListener(onError::accept);
     }
 
