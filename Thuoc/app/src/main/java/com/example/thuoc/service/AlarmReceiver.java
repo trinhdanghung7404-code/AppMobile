@@ -19,11 +19,14 @@ import androidx.core.content.ContextCompat;
 import com.example.thuoc.R;
 import com.example.thuoc.dao.MedicineDAO;
 import com.example.thuoc.dao.UserMedicineDAO;
+import com.example.thuoc.dao.MedicationLogDAO;
 
 public class AlarmReceiver extends BroadcastReceiver {
 
     private static final String TAG = "AlarmReceiver";
     private static final String CHANNEL_ID = "medicine_channel";
+    private static final String ACTION_MARK_TAKEN = "MARK_TAKEN";
+    private static final String ACTION_MARK_MISSED = "MARK_MISSED";
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     @Override
@@ -32,99 +35,155 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         String action = intent.getAction();
 
-        // 🔹 1️⃣ Nếu người dùng nhấn "Đã uống" trong thông báo
-        if ("MARK_TAKEN".equals(action)) {
-            String usermedId = intent.getStringExtra("usermedId");
-            String dosage = intent.getStringExtra("dosage");
-            String medicineDocId = intent.getStringExtra("medicineDocId");
-
-            if (usermedId != null && dosage != null && medicineDocId != null) {
-                new MedicineDAO().subtractMedicineFromUser(usermedId, medicineDocId, dosage);
-                Log.d(TAG, " Ghi nhận 'Đã uống': userMedId=" + usermedId + ", medicineDocId=" + medicineDocId + ", dosage=" + dosage);
-                Toast.makeText(context, "Đã ghi nhận bạn đã uống thuốc", Toast.LENGTH_SHORT).show();
-
-                NotificationManagerCompat.from(context).cancelAll();
-            } else {
-                Log.e(TAG, "Thiếu dữ liệu khi xử lý MARK_TAKEN");
-                Toast.makeText(context, "Không thể ghi nhận uống thuốc: dữ liệu thiếu", Toast.LENGTH_LONG).show();
-            }
+        if (ACTION_MARK_TAKEN.equals(action)) {
+            handleMarkTaken(context, intent);
             return;
         }
 
+        if (ACTION_MARK_MISSED.equals(action)) {
+            handleMarkMissed(context, intent);
+            return;
+        }
+
+        handleAlarmNotify(context, intent);
+    }
+
+    // ===================== MARK TAKEN =====================
+    private void handleMarkTaken(Context context, Intent intent) {
+        String usermedId = intent.getStringExtra("usermedId");
+        String userId = intent.getStringExtra("userId");              // ✅
+        String medicineDocId = intent.getStringExtra("medicineDocId");
+        String dosage = intent.getStringExtra("dosage");
+        String medicineName = intent.getStringExtra("medicineName");
+        String method = intent.getStringExtra("method");
+
+        if (usermedId == null || userId == null || medicineDocId == null || dosage == null) {
+            Log.e(TAG, "❌ MARK_TAKEN thiếu dữ liệu");
+            Toast.makeText(context, "Không thể ghi nhận uống thuốc", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Trừ thuốc
+        new MedicineDAO().subtractMedicineFromUser(usermedId, medicineDocId, dosage);
+
+        // Ghi log
+        new MedicationLogDAO().logEvent(
+                usermedId,
+                userId,                     // ✅ ĐÚNG userId
+                medicineName,
+                dosage,
+                "TAKEN",
+                method != null ? method : "UNKNOWN"
+        );
+
+        Log.d(TAG, "✅ Đã trừ thuốc + ghi log");
+
+        Toast.makeText(context, "✅ Đã ghi nhận bạn đã uống thuốc", Toast.LENGTH_SHORT).show();
+
+        NotificationManagerCompat.from(context).cancelAll();
+        context.stopService(new Intent(context, VoiceListenerService.class));
+    }
+
+    // ===================== MARK MISSED =====================
+    private void handleMarkMissed(Context context, Intent intent) {
+        String usermedId = intent.getStringExtra("usermedId");
+        String userId = intent.getStringExtra("userId");              // ✅
+        String dosage = intent.getStringExtra("dosage");
+        String medicineName = intent.getStringExtra("medicineName");
+
+        if (usermedId == null || userId == null) {
+            Log.e(TAG, "❌ MARK_MISSED thiếu dữ liệu");
+            return;
+        }
+
+        new MedicationLogDAO().logEvent(
+                usermedId,
+                userId,                     // ✅ ĐÚNG userId
+                medicineName,
+                dosage,
+                "MISSED",
+                "VOICE_TIMEOUT"
+        );
+
+        Log.d(TAG, "❌ Đã ghi nhận QUÊN uống thuốc");
+    }
+
+    // ===================== ALARM =====================
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    private void handleAlarmNotify(Context context, Intent intent) {
         String medicineName = intent.getStringExtra("medicineName");
         String dosage = intent.getStringExtra("dosage");
         String usermedId = intent.getStringExtra("usermedId");
+        String userId = intent.getStringExtra("userId");              // ✅
         String medicineDocId = intent.getStringExtra("medicineDocId");
 
-        if (usermedId == null || medicineDocId == null) {
-            Log.e(TAG, "Thiếu usermedId hoặc medicineDocId khi tạo thông báo");
-            Toast.makeText(context, "Không thể gửi thông báo: thiếu thông tin người dùng hoặc thuốc", Toast.LENGTH_LONG).show();
+        if (usermedId == null || userId == null || medicineDocId == null) {
+            Log.e(TAG, "❌ Alarm thiếu dữ liệu");
             return;
         }
 
         createNotificationChannel(context);
 
-        UserMedicineDAO usermedDAO = new UserMedicineDAO();
-        usermedDAO.getNotificationSettings(usermedId, (textNotify, voiceNotify) -> {
-            Log.d(TAG, "📣 Thông báo - text=" + textNotify + ", voice=" + voiceNotify);
+        UserMedicineDAO dao = new UserMedicineDAO();
+        dao.getNotificationSettings(usermedId, (textNotify, voiceNotify) -> {
 
-            if (!textNotify && !voiceNotify) {
-                Log.d(TAG, "Người dùng tắt hết thông báo");
-                return;
-            }
+            if (!textNotify && !voiceNotify) return;
 
             String message = medicineName + " - " + dosage;
 
-            // 🔹 Hiển thị thông báo văn bản
+            // ================= TEXT =================
             if (textNotify) {
                 Intent takenIntent = new Intent(context, AlarmReceiver.class);
-                takenIntent.setAction("MARK_TAKEN");
+                takenIntent.setAction(ACTION_MARK_TAKEN);
                 takenIntent.putExtra("usermedId", usermedId);
+                takenIntent.putExtra("userId", userId);              // ✅
                 takenIntent.putExtra("medicineDocId", medicineDocId);
                 takenIntent.putExtra("dosage", dosage);
+                takenIntent.putExtra("medicineName", medicineName);
+                takenIntent.putExtra("method", "BUTTON");
 
-                PendingIntent takenPendingIntent = PendingIntent.getBroadcast(
+                PendingIntent takenPI = PendingIntent.getBroadcast(
                         context,
-                        (int) System.currentTimeMillis(),
+                        0,
                         takenIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
 
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                        .setSmallIcon(android.R.drawable.ic_dialog_info)
-                        .setContentTitle("💊 Nhắc uống thuốc")
-                        .setContentText(message)
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
-                        .setAutoCancel(true)
-                        .addAction(android.R.drawable.ic_input_add, "Đã uống", takenPendingIntent);
+                NotificationCompat.Builder builder =
+                        new NotificationCompat.Builder(context, CHANNEL_ID)
+                                .setSmallIcon(R.drawable.ic_notification)
+                                .setContentTitle("💊 Nhắc uống thuốc")
+                                .setContentText(message)
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .setAutoCancel(true)
+                                .addAction(
+                                        android.R.drawable.checkbox_on_background,
+                                        "Đã uống",
+                                        takenPI
+                                );
 
                 NotificationManagerCompat.from(context)
                         .notify((int) System.currentTimeMillis(), builder.build());
             }
 
-            // 🔹 Kích hoạt service lắng nghe giọng nói trong 10 phút
+            // ================= VOICE =================
             if (voiceNotify) {
-                try {
-                    Intent micIntent = new Intent(context, VoiceListenerService.class);
-                    micIntent.putExtra("usermedId", usermedId);
-                    micIntent.putExtra("medicineDocId", medicineDocId);
-                    micIntent.putExtra("dosage", dosage);
-                    micIntent.putExtra("duration", 10 * 60 * 1000); // ⏱ 10 phút
+                Intent voiceIntent = new Intent(context, VoiceListenerService.class);
+                voiceIntent.putExtra("usermedId", usermedId);
+                voiceIntent.putExtra("userId", userId);              // ✅
+                voiceIntent.putExtra("medicineDocId", medicineDocId);
+                voiceIntent.putExtra("dosage", dosage);
+                voiceIntent.putExtra("medicineName", medicineName);
+                voiceIntent.putExtra("duration", 10 * 60 * 1000);
 
-                    ContextCompat.startForegroundService(context, micIntent);
-                    Log.d(TAG, "🎤 VoiceListenerService được bật trong 10 phút");
-
-                } catch (Exception e) {
-                    Log.e(TAG, "🔥 Lỗi khi bật VoiceListenerService: " + e.getMessage());
-                }
+                ContextCompat.startForegroundService(context, voiceIntent);
+                Log.d(TAG, "🎤 VoiceListenerService started (10 phút)");
             }
 
-        }, e -> {
-            Log.e(TAG, "🔥 Lỗi khi đọc cài đặt người dùng: " + e.getMessage());
-            Toast.makeText(context, "❌ Lỗi khi đọc cài đặt thông báo", Toast.LENGTH_LONG).show();
-        });
+        }, e -> Log.e(TAG, "🔥 Lỗi đọc setting: " + e.getMessage()));
     }
 
+    // ===================== CHANNEL =====================
     private void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
@@ -132,7 +191,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                     "Nhắc uống thuốc",
                     NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Thông báo nhắc uống thuốc đúng giờ");
+            channel.setDescription("Thông báo nhắc uống thuốc");
             NotificationManager manager = context.getSystemService(NotificationManager.class);
             if (manager != null) manager.createNotificationChannel(channel);
         }

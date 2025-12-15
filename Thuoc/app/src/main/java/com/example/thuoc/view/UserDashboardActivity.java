@@ -2,6 +2,7 @@ package com.example.thuoc.view;
 
 import android.Manifest;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -15,6 +16,7 @@ import com.example.thuoc.R;
 import com.example.thuoc.adapter.MedicineEntryAdapter;
 import com.example.thuoc.dao.UserMedicineDAO;
 import com.example.thuoc.model.MedicineEntry;
+import com.example.thuoc.model.UserMedicine;
 import com.example.thuoc.service.AlarmScheduler;
 
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ public class UserDashboardActivity extends AppCompatActivity {
     private MedicineEntryAdapter adapter;
     private List<MedicineEntry> medicineList;
 
-    private String usermedId, userName;
+    private String usermedId, userName, userId;
     private UserMedicineDAO userMedicineDAO;
 
     @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
@@ -46,7 +48,8 @@ public class UserDashboardActivity extends AppCompatActivity {
 
         userMedicineDAO = new UserMedicineDAO();
 
-        usermedId = getIntent().getStringExtra("userId");
+        usermedId = getIntent().getStringExtra("usermedId");
+        userId = getIntent().getStringExtra("userId");
         userName = getIntent().getStringExtra("userName");
 
         tvWelcome.setText("Xin chào, " + (userName != null ? userName : "Người dùng"));
@@ -68,7 +71,13 @@ public class UserDashboardActivity extends AppCompatActivity {
 
             // Lên lịch thông báo cho từng thuốc
             for (MedicineEntry med : medicines) {
-                AlarmScheduler.scheduleAlarmsForMedicine(this, med, usermedId);
+                Log.d("DEBUG",
+                        "Schedule alarm: usermedId=" + usermedId +
+                                ", userId=" + userId +
+                                ", medicine=" + med.getName()
+                );
+
+                AlarmScheduler.scheduleAlarmsForMedicine(this, med, usermedId, userId);
             }
 
         }, e -> Toast.makeText(this, "Lỗi khi tải thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show());

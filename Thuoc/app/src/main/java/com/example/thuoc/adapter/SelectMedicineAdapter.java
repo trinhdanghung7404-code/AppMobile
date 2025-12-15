@@ -11,7 +11,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.thuoc.R;
 import com.example.thuoc.model.Medicine;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAdapter.ViewHolder> {
 
@@ -25,6 +28,19 @@ public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAd
     public SelectMedicineAdapter(List<Medicine> medicineList, OnMedicineClickListener listener) {
         this.medicineList = medicineList;
         this.listener = listener;
+    }
+    private boolean isExpired(String expiryDate) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            sdf.setLenient(false);
+
+            Date expiry = sdf.parse(expiryDate);
+            Date today = new Date();
+
+            return expiry != null && expiry.before(today);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @NonNull

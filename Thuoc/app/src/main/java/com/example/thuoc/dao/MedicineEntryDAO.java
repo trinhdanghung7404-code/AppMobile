@@ -96,4 +96,39 @@ public class MedicineEntryDAO {
                 }).addOnSuccessListener(aVoid -> onSuccess.run())
                 .addOnFailureListener(onError::accept);
     }
+    public void deleteTime(String userId, String entryDocId, String timeStr, Runnable onSuccess, @NonNull Consumer<Exception> onError) {
+        DocumentReference docRef = db.collection("UserMedicine").document(userId)
+                .collection("Medicines").document(entryDocId);
+
+        db.runTransaction(transaction -> {
+                    DocumentSnapshot snapshot = transaction.get(docRef);
+                    if (!snapshot.exists()) {
+                        throw new FirebaseFirestoreException("Medicine entry does not exist", FirebaseFirestoreException.Code.NOT_FOUND);
+                    }
+
+                    MedicineEntry med = snapshot.toObject(MedicineEntry.class);
+                    List<java.util.Map<String, String>> timesList = med.getTimes();
+
+                    if (timesList == null || timesList.isEmpty()) {
+                        // Không có gì để xóa
+                        throw new FirebaseFirestoreException("Time list is empty", FirebaseFirestoreException.Code.NOT_FOUND);
+                    }
+
+                    // Tìm và xóa giờ uống có "time" trùng với timeStr
+                    boolean removed = timesList.removeIf(t -> timeStr.equals(t.get("time")));
+
+                    if (!removed) {
+                        // Không tìm thấy giờ uống cần xóa
+                        throw new FirebaseFirestoreException("Time to delete not found: " + timeStr, FirebaseFirestoreException.Code.NOT_FOUND);
+                    }
+
+                    // Cập nhật lại đối tượng MedicineEntry (timesList đã được sửa đổi)
+                    med.setTimes(timesList);
+
+                    // Lưu lại toàn bộ đối tượng (hoặc chỉ field times nếu bạn muốn)
+                    transaction.set(docRef, med, SetOptions.merge());
+                    return null;
+                }).addOnSuccessListener(aVoid -> onSuccess.run())
+                .addOnFailureListener(onError::accept);
+    }
 }

@@ -24,7 +24,7 @@ public class AlarmScheduler {
 
     @SuppressLint("ScheduleExactAlarm")
     @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
-    public static void scheduleAlarmsForMedicine(Context context, MedicineEntry medicineEntry, String usermedId) {
+    public static void scheduleAlarmsForMedicine(Context context, MedicineEntry medicineEntry, String usermedId, String userId) {
         if (medicineEntry.getTimes() == null) return;
 
         for (Map<String, String> timeEntry : medicineEntry.getTimes()) {
@@ -47,6 +47,7 @@ public class AlarmScheduler {
                 intent.putExtra("medicineDocId", medicineEntry.getMedicineId());
                 intent.putExtra("dosage", dosage);
                 intent.putExtra("usermedId", usermedId);
+                intent.putExtra("userId", userId);
 
                 PendingIntent pendingIntent = PendingIntent.getBroadcast(
                         context,

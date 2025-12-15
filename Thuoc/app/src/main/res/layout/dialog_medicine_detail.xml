@@ -4,7 +4,6 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Tên thuốc -->
     <TextView
         android:id="@+id/tvMedName"
         android:layout_width="match_parent"
@@ -14,7 +13,6 @@
         android:textSize="18sp"
         android:textColor="@android:color/black"/>
 
-    <!-- Ngày hết hạn -->
     <TextView
         android:id="@+id/tvMedExpiry"
         android:layout_width="match_parent"
@@ -23,16 +21,22 @@
         android:layout_marginTop="8dp"
         android:textSize="16sp" />
 
-    <!-- Giờ uống -->
     <TextView
-        android:id="@+id/tvMedTimes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Giờ uống"
-        android:layout_marginTop="8dp"
+        android:text="Giờ và Liều lượng:"
+        android:layout_marginTop="16dp"
         android:textSize="16sp" />
 
-    <!-- Nút thêm giờ -->
+    <LinearLayout
+        android:id="@+id/llTimesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="4dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"/>
+
     <Button
         android:id="@+id/btnAddTime"
         android:layout_width="wrap_content"

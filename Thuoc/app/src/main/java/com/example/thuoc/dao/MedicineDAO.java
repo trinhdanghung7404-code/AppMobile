@@ -22,9 +22,12 @@ public class MedicineDAO {
         db = FirebaseFirestore.getInstance();
     }
 
-    public ListenerRegistration getAllMedicines(Consumer<List<Medicine>> onSuccess,
+    public ListenerRegistration getAllMedicines(String userId, // <--- Thêm userId vào đây
+                                                Consumer<List<Medicine>> onSuccess,
                                                 Consumer<Exception> onError) {
+        // Chỉ lấy các documents có trường 'userId' bằng với userId truyền vào
         return db.collection("Medicine")
+                .whereEqualTo("userId", userId) // <--- Lọc theo userId
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         if (onError != null) onError.accept(error);
@@ -35,17 +38,19 @@ public class MedicineDAO {
                         List<Medicine> list = new ArrayList<>();
                         for (QueryDocumentSnapshot doc : value) {
                             Medicine med = doc.toObject(Medicine.class);
-                            med.setId(doc.getId()); // nếu model có setId
+                            med.setId(doc.getId());
                             list.add(med);
                         }
                         if (onSuccess != null) onSuccess.accept(list);
                     }
                 });
     }
-
     public void addMedicine(Medicine med,
+                            String userId,
                             Runnable onSuccess,
                             Consumer<Exception> onError) {
+
+        med.setUserId(userId);
 
         db.collection("Medicine")
                 .get()
@@ -71,9 +76,11 @@ public class MedicineDAO {
                     if (onError != null) onError.accept(e);
                 });
     }
-
-    public void getMedicines(Consumer<List<Medicine>> onSuccess, Consumer<Exception> onFailure) {
+    public void getMedicines(String userId,
+                             Consumer<List<Medicine>> onSuccess,
+                             Consumer<Exception> onFailure) {
         db.collection("Medicine")
+                .whereEqualTo("userId", userId)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     List<Medicine> medicineList = new ArrayList<>();
@@ -84,7 +91,7 @@ public class MedicineDAO {
                             medicineList.add(m);
                         }
                     }
-                    Log.d("MedicineDAO", "✅ Loaded " + medicineList.size() + " medicines");
+                    Log.d("MedicineDAO", "✅ Loaded " + medicineList.size() + " medicines for user " + userId);
                     if (onSuccess != null) onSuccess.accept(medicineList);
                 })
                 .addOnFailureListener(e -> {

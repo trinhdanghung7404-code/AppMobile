@@ -35,7 +35,7 @@ public class BootReceiver extends BroadcastReceiver {
                             for (QueryDocumentSnapshot doc : querySnapshot) {
                                 MedicineEntry med = doc.toObject(MedicineEntry.class);
                                 if (med != null) {
-                                    AlarmScheduler.scheduleAlarmsForMedicine(context, med, userId);
+                                    AlarmScheduler.scheduleAlarmsForMedicine(context, med, userId, userId);
                                 }
                             }
                         });

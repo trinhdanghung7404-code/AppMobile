@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.thuoc.view.LoginActivity;
+import com.example.thuoc.view.ManagerLoginActivity;
 import com.example.thuoc.view.UserLoginActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         Button btnUser = findViewById(R.id.btnUser);
 
         btnManager.setOnClickListener(v -> {
-            Intent i = new Intent(MainActivity.this, LoginActivity.class);
+            Intent i = new Intent(MainActivity.this, ManagerLoginActivity.class);
             startActivity(i);
         });
 

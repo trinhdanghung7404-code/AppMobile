@@ -6,15 +6,16 @@ public class Medicine {
     private String expirydate;
     private int quantity;
     private String unit;
-
+    private String userId;
     public Medicine() {}
 
-    public Medicine(String id, String name, String expirydate, int quantity, String unit) {
+    public Medicine(String id, String name, String expirydate, int quantity, String unit, String userId) {
         this.id = id;
         this.name = name;
         this.expirydate = expirydate;
         this.quantity = quantity;
         this.unit = unit;
+        this.userId = userId;
     }
 
     public String getId() { return id; }
@@ -31,4 +32,6 @@ public class Medicine {
 
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 }

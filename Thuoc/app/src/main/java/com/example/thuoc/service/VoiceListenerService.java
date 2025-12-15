@@ -22,8 +22,8 @@ import androidx.annotation.RequiresPermission;
 import androidx.core.app.NotificationCompat;
 
 import com.example.thuoc.R;
-import com.example.thuoc.dao.MedicineDAO;
-import com.example.thuoc.service.VoskClient;
+// Đổi tên import từ VoskClient sang WhisperClient
+import com.example.thuoc.service.WhisperClient;
 
 import org.json.JSONObject;
 
@@ -38,8 +38,12 @@ public class VoiceListenerService extends Service {
 
     private static final String TAG = "VoiceListenerService";
     private static final String CHANNEL_ID = "voice_listener_channel";
-    private static final String SERVER_URL = "ws://10.24.1.168:2700";
 
+    // Cập nhật URL và PORT.
+    // Nếu chạy trên Android Emulator, hãy dùng 10.0.2.2
+    // Nếu chạy trên thiết bị vật lý, hãy dùng IP máy tính của bạn (10.24.1.168)
+
+    private static final String SERVER_URL = "ws://10.0.2.2:8080";
     private static final int SAMPLE_RATE = 16000;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
@@ -49,15 +53,16 @@ public class VoiceListenerService extends Service {
     private Handler handler;
     private boolean isListening = false;
     private boolean isRecording = false;
-
+    private boolean isConfirmed = false;
     private AudioRecord recorder;
     private int bufferSize;
     private WebSocket webSocket;
 
     private TextToSpeech tts;
-    private VoskClient voskClient;
+    // Đổi tên biến từ voskClient sang whisperClient
+    private WhisperClient whisperClient;
 
-    private String usermedId, medicineDocId, dosage;
+    private String usermedId, userId, medicineDocId, dosage, medicineName;
 
     @Override
     public void onCreate() {
@@ -87,20 +92,68 @@ public class VoiceListenerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (intent != null) {
+            usermedId = intent.getStringExtra("usermedId");
+            userId = intent.getStringExtra("userId");
+            medicineDocId = intent.getStringExtra("medicineDocId");
+            dosage = intent.getStringExtra("dosage");
+            medicineName = intent.getStringExtra("medicineName");
+        }
+
+        Log.d(TAG, "📦 VoiceService data: "
+                + "usermedId=" + usermedId
+                + ", userId=" + userId
+                + ", medicineDocId=" + medicineDocId
+                + ", dosage=" + dosage);
+
+
         startForeground(1, createNotification("Đang lắng nghe giọng nói..."));
 
-        if (!isListening) startVoskConnection();
+        if (!isListening) startWhisperConnection();
 
         handler.postDelayed(() -> {
+
+            if (!isConfirmed) {
+                Log.d(TAG, "⏰ Voice timeout – sending MARK_MISSED");
+                sendMissed();
+            }
+
             stopListening();
             stopSelf();
+
         }, LISTEN_DURATION);
 
         return START_STICKY;
     }
 
-    private void startVoskConnection() {
-        voskClient = new VoskClient(SERVER_URL, new WebSocketListener() {
+    private void sendMissed() {
+        Intent missIntent = new Intent(this, AlarmReceiver.class);
+        missIntent.setAction("MARK_MISSED");
+        missIntent.putExtra("usermedId", usermedId);
+        missIntent.putExtra("userId", userId);
+        missIntent.putExtra("medicineDocId", medicineDocId);
+        missIntent.putExtra("dosage", dosage);
+        missIntent.putExtra("medicineName", medicineName);
+        missIntent.putExtra("method", "VOICE_TIMEOUT");
+        sendBroadcast(missIntent);
+    }
+
+    private void sendMarkTaken() {
+        Intent confirmIntent = new Intent(this, AlarmReceiver.class);
+        confirmIntent.setAction("MARK_TAKEN");
+        confirmIntent.putExtra("usermedId", usermedId);
+        confirmIntent.putExtra("userId", userId);
+        confirmIntent.putExtra("medicineDocId", medicineDocId);
+        confirmIntent.putExtra("dosage", dosage);
+        confirmIntent.putExtra("medicineName", medicineName);
+        confirmIntent.putExtra("method", "VOICE");
+
+        sendBroadcast(confirmIntent);
+    }
+
+    private void startWhisperConnection() {
+        whisperClient = new WhisperClient(SERVER_URL, new WebSocketListener() {
             @RequiresPermission(Manifest.permission.RECORD_AUDIO)
             @Override
             public void onOpen(WebSocket ws, Response response) {
@@ -109,24 +162,46 @@ public class VoiceListenerService extends Service {
             }
 
             @Override
-            public void onMessage(WebSocket webSocket, String text) {
+            public void onMessage(WebSocket ws, String text) {
                 try {
                     JSONObject json = new JSONObject(text);
-                    String finalText = json.optString("final");
 
-                    if (!finalText.isEmpty()) {
-                        Log.d(TAG, "final: " + finalText);
-                        handleRecognitionResult(finalText.toLowerCase());
+                    String intent = json.optString("intent", "");
+                    boolean done = json.optBoolean("done", false);
+
+                    if ("CONFIRM_TAKEN_MEDICINE".equals(intent) || done) {
+
+                        isConfirmed = true; // ⭐ CỰC KỲ QUAN TRỌNG
+
+                        Log.d(TAG, "✅ Intent matched – handling confirmation");
+
+                        isRecording = false;
+                        isListening = false;
+
+                        if (whisperClient != null) {
+                            whisperClient.close();
+                            whisperClient = null;
+                        }
+
+                        speak("Đã ghi nhận bạn đã uống thuốc.");
+
+                        sendMarkTaken();
+
+                        stopSelf();
                     }
 
                 } catch (Exception e) {
-                    Log.e(TAG, "Message parse error: " + e.getMessage());
+                    Log.e(TAG, "Message parse error", e);
                 }
             }
 
             @Override
-            public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-                restartListening();
+            public void onFailure(WebSocket ws, Throwable t, Response response) {
+                if (!isListening) {
+                    Log.d(TAG, "WS closed normally – not restarting");
+                    return;
+                }
+                Log.e(TAG, "WebSocket failure", t);
             }
 
             @Override
@@ -153,10 +228,12 @@ public class VoiceListenerService extends Service {
                 byte[] buffer = new byte[bufferSize];
 
                 try {
-                    while (isRecording && recorder != null) {
+                    while (isRecording && recorder != null && whisperClient != null) {
                         int bytesRead = recorder.read(buffer, 0, buffer.length);
-                        if (bytesRead > 0 && webSocket != null) {
-                            webSocket.send(ByteString.of(buffer, 0, bytesRead));
+
+                        if (bytesRead > 0 && !whisperClient.sendAudio(buffer)) {
+                            Log.d(TAG, "WS closed – stopping audio thread");
+                            break;
                         }
                     }
                 } catch (Exception ignored) {
@@ -180,21 +257,6 @@ public class VoiceListenerService extends Service {
         }
     }
 
-    private void handleRecognitionResult(String text) {
-        if (text.contains("đã uống") || text.contains("uống rồi")) {
-            speak("Đã ghi nhận bạn đã uống thuốc.");
-
-            if (usermedId != null && medicineDocId != null && dosage != null) {
-                new MedicineDAO().subtractMedicineFromUser(usermedId, medicineDocId, dosage);
-            }
-
-            stopListening();
-            stopSelf();
-        } else if (!text.trim().isEmpty()) {
-            speak("Bạn nói: " + text);
-        }
-    }
-
     private void speak(String text) {
         if (tts == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -208,13 +270,14 @@ public class VoiceListenerService extends Service {
         isListening = false;
         isRecording = false;
 
-        if (voskClient != null) voskClient.close();
+        if (whisperClient != null) {
+            whisperClient.close();
+            whisperClient = null;
+        }
 
         if (recorder != null) {
             try {
-                if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-                    recorder.stop();
-                }
+                recorder.stop();
             } catch (Exception ignored) {}
             recorder.release();
             recorder = null;
@@ -223,9 +286,13 @@ public class VoiceListenerService extends Service {
 
     private void restartListening() {
         handler.postDelayed(() -> {
+            if (isListening) {
+                Log.d(TAG, "⏰ Voice timeout → MARK_MISSED");
+                sendMissed();
+            }
             stopListening();
-            startVoskConnection();
-        }, 2000);
+            stopSelf();
+        }, LISTEN_DURATION);
     }
 
     private void createNotificationChannel() {

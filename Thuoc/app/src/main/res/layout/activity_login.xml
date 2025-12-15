@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="24dp"
-    tools:context=".view.LoginActivity">
+    tools:context=".view.ManagerLoginActivity">
 
     <!-- Tiêu đề -->
     <TextView
@@ -18,7 +18,6 @@
         android:textStyle="bold"
         android:layout_marginBottom="32dp" />
 
-    <!-- Nhập số điện thoại -->
     <EditText
         android:id="@+id/etPhone"
         android:layout_width="match_parent"

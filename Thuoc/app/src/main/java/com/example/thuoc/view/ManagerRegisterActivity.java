@@ -9,9 +9,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.thuoc.R;
 import com.example.thuoc.controller.AuthController;
-import com.example.thuoc.util.Constants;
 
-public class RegisterActivity extends AppCompatActivity {
+public class ManagerRegisterActivity extends AppCompatActivity {
 
     private AuthController authController;
 

@@ -38,8 +38,6 @@
             android:scaleType="fitCenter"
             android:adjustViewBounds="true" />
 
-
-
     </RelativeLayout>
 
     <!-- Danh sách thành viên -->

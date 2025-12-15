@@ -1,6 +1,7 @@
 package com.example.thuoc.model;
 
 public class UserMedicine {
+    private String usermedId;
     private String userId;        // Liên kết với người dùng trong Firestore
     private String userName;
     private String phone;
@@ -37,6 +38,9 @@ public class UserMedicine {
     }
 
     // ✅ Getter - Setter
+    public String getUsermedId() { return usermedId; }
+    public void setUsermedId(String usermedId) { this.usermedId = usermedId; }
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 

@@ -49,9 +49,12 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         recyclerView.setAdapter(memberAdapter);
 
         memberAdapter.setOnItemClickListener((userMed, position) -> {
-            String docId = docIds.get(position);
-            Intent i = new Intent(ManagerDashboardActivity.this, UserMedicineActivity.class);
-            i.putExtra("userId", docId);
+            String usermedId = docIds.get(position);
+            String managerId = getIntent().getStringExtra("userId");
+
+            Intent i = new Intent(ManagerDashboardActivity.this, ManagerUserMedicineEditActivity.class);
+            i.putExtra("usermedId", usermedId);
+            i.putExtra("managerId", managerId);
             i.putExtra("userName", userMed.getUserName());
             i.putExtra("userPhone", userMed.getPhone());
             startActivity(i);
@@ -87,14 +90,14 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         ImageView btnAccount = findViewById(R.id.btnAccount);
 
         navTask.setOnClickListener(v -> {
-            Intent i = new Intent(this, MedicineActivity.class);
+            Intent i = new Intent(this, ManagerMedicineEditActivity.class);
             i.putExtra("userId", getIntent().getStringExtra("userId"));
             startActivity(i);
             overridePendingTransition(0, 0);
         });
 
         btnAccount.setOnClickListener(v -> {
-            Intent i = new Intent(this, UserAccountActivity.class);
+            Intent i = new Intent(this, ManagerAccountActivity.class);
             i.putExtra("userId", getIntent().getStringExtra("userId"));
             startActivity(i);
         });

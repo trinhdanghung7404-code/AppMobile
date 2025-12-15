@@ -34,12 +34,12 @@
 
         <!-- Login -->
         <activity
-            android:name=".view.LoginActivity"
+            android:name=".view.ManagerLoginActivity"
             android:exported="true" />
 
         <!-- Register -->
         <activity
-            android:name=".view.RegisterActivity"
+            android:name=".view.ManagerRegisterActivity"
             android:exported="true" />
 
         <!-- Manager Dashboard -->
@@ -48,11 +48,11 @@
             android:exported="true" />
 
         <activity
-            android:name=".view.MedicineActivity"
+            android:name=".view.ManagerMedicineEditActivity"
             android:exported="true"/>
 
         <activity
-            android:name=".view.UserMedicineActivity"
+            android:name=".view.ManagerUserMedicineEditActivity"
             android:exported="true"/>
 
         <activity
@@ -62,11 +62,12 @@
         <activity
             android:name=".view.UserDashboardActivity"
             android:exported="true"/>
-
         <activity
-            android:name=".view.UserAccountActivity"
+            android:name=".view.ManagerAccountActivity"
             android:exported="true"/>
-
+        <activity
+            android:name=".view.ManagerMedicationHistoryActivity"
+            android:exported="true"/>
         <receiver
             android:name=".service.AlarmReceiver"
             android:enabled="true"

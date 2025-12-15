@@ -18,7 +18,6 @@ import com.example.thuoc.R;
 import com.example.thuoc.adapter.MedicineAdapter;
 import com.example.thuoc.dao.MedicineDAO;
 import com.example.thuoc.model.Medicine;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -28,7 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public class MedicineActivity extends AppCompatActivity {
+public class ManagerMedicineEditActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewMedicine;
     private MedicineAdapter adapter;
@@ -37,10 +36,21 @@ public class MedicineActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FloatingActionButton fabAdd, fabDelete;
 
+    // 🚩 THAY ĐỔI 1: Thêm biến để lưu trữ User ID
+    private String currentUserId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_medicine);
+
+        // 🚩 THAY ĐỔI 2: Lấy User ID từ Intent
+        currentUserId = getIntent().getStringExtra("userId");
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Toast.makeText(this, "Lỗi: Không tìm thấy User ID", Toast.LENGTH_LONG).show();
+            finish(); // Đóng Activity nếu không có ID
+            return;
+        }
 
         recyclerViewMedicine = findViewById(R.id.recyclerViewMedicine);
         recyclerViewMedicine.setLayoutManager(new LinearLayoutManager(this));
@@ -52,7 +62,7 @@ public class MedicineActivity extends AppCompatActivity {
         medicineDAO = new MedicineDAO();
         db = FirebaseFirestore.getInstance();
 
-        loadMedicines();
+        loadMedicines(); // Gọi hàm load thuốc với userId
 
         // 🔹 Liên kết các nút FloatingActionButton
         fabAdd = findViewById(R.id.fabAddMedicine);
@@ -67,7 +77,7 @@ public class MedicineActivity extends AppCompatActivity {
 
         navHome.setOnClickListener(v -> {
             Intent i = new Intent(this, ManagerDashboardActivity.class);
-            i.putExtra("userId", getIntent().getStringExtra("userId"));
+            i.putExtra("userId", currentUserId); // Sử dụng biến đã lưu
             startActivity(i);
             overridePendingTransition(0, 0);
         });
@@ -77,8 +87,8 @@ public class MedicineActivity extends AppCompatActivity {
         });
 
         btnAccount.setOnClickListener(v -> {
-            Intent i = new Intent(this, UserAccountActivity.class);
-            i.putExtra("userId", getIntent().getStringExtra("userId"));
+            Intent i = new Intent(this, ManagerAccountActivity.class);
+            i.putExtra("userId", currentUserId); // Sử dụng biến đã lưu
             startActivity(i);
         });
 
@@ -86,7 +96,9 @@ public class MedicineActivity extends AppCompatActivity {
 
     // 🔹 Load danh sách thuốc
     private void loadMedicines() {
+        // 🚩 THAY ĐỔI 3: Truyền currentUserId vào MedicineDAO để lọc thuốc
         medicineDAO.getAllMedicines(
+                currentUserId, // <-- Truyền userId vào đây
                 newList -> adapter.updateData(newList),
                 error -> Toast.makeText(this, "Lỗi load dữ liệu: " + error.getMessage(), Toast.LENGTH_SHORT).show()
         );
@@ -104,6 +116,9 @@ public class MedicineActivity extends AppCompatActivity {
                 .setTitle("Xóa thuốc")
                 .setMessage("Bạn có chắc muốn xoá " + selectedIds.size() + " thuốc đã chọn?")
                 .setPositiveButton("Xoá", (dialog, which) -> {
+                    // Cần kiểm tra lại: Trong MedicineDAO chưa có hàm xoá có userId,
+                    // nhưng logic của bạn ở đây chỉ dựa vào ID, nên tôi giữ nguyên
+                    // (Vì khi load đã lọc theo user rồi)
                     for (String id : selectedIds) {
                         db.collection("Medicine").document(id)
                                 .delete()
@@ -113,12 +128,14 @@ public class MedicineActivity extends AppCompatActivity {
                                         Toast.makeText(this, "Lỗi khi xoá: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                     }
                     selectedIds.clear();
+                    // Cần load lại dữ liệu để cập nhật UI sau khi xóa
+                    loadMedicines();
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
     }
 
-    // ➕ Thêm thuốc (giữ nguyên logic của bạn)
+    // ➕ Thêm thuốc (Đã sửa để thêm userId)
     private void showAddMedicineDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_medicine, null);
 
@@ -169,18 +186,27 @@ public class MedicineActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // 🔹 Sinh ID tăng dần dựa trên số thuốc hiện có
+                    // 🚩 THAY ĐỔI 4: Thêm thuốc với userId
+
+                    // Sử dụng ID tăng dần (theo logic cũ của bạn)
                     db.collection("Medicine")
                             .get()
                             .addOnSuccessListener(query -> {
                                 int nextId = query.size() + 1;
                                 String id = String.valueOf(nextId);
 
-                                Medicine med = new Medicine(id, name, expiry, qty, "viên");
+                                // Khởi tạo Medicine với các trường mới (vì bạn đã cập nhật constructor)
+                                // Lưu ý: constructor mới của bạn có 6 tham số: (id, name, expirydate, quantity, unit, userId)
+                                // Tuy nhiên, vì unit đã bị bỏ qua trong dialog, tôi sẽ dùng default là "viên"
+                                Medicine med = new Medicine(id, name, expiry, qty, "viên", currentUserId);
+
+                                // Gọi addMedicine đã được cập nhật
                                 medicineDAO.addMedicine(
                                         med,
-                                        () -> Toast.makeText(this, "Đã thêm thuốc #" + id, Toast.LENGTH_SHORT).show(),
-                                        e -> Toast.makeText(this, "Lỗi khi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                        currentUserId,
+                                        () -> { /* onSuccess */ },
+                                        // 💡 SỬA LỖI TẠI ĐÂY: Thêm tham số 'e'
+                                        (e) -> Toast.makeText(this, "Lỗi khi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                                 );
                             })
                             .addOnFailureListener(e -> Toast.makeText(this, "Không thể tạo ID: " + e.getMessage(), Toast.LENGTH_SHORT).show());

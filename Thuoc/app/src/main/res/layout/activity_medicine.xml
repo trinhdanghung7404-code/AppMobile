@@ -5,25 +5,32 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <!-- Tiêu đề -->
-    <TextView
-        android:id="@+id/tvTitleMedicine"
+    <RelativeLayout
+        android:id="@+id/headerContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Danh sách thuốc"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="#333333"
-        android:gravity="center"
-        android:padding="16dp"
-        android:background="#F3F3F3" />
+        android:background="#F3E8FF"
+        android:elevation="3dp"
+        android:padding="16dp">
+
+        <!-- Tiêu đề -->
+        <TextView
+            android:id="@+id/tvTitleMedicine"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Danh sách thuốc"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#4B0082"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
 
     <!-- Danh sách thuốc -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewMedicine"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_below="@id/tvTitleMedicine"
+        android:layout_below="@id/headerContainer"
         android:layout_above="@id/bottomNavContainer"
         android:padding="16dp" />
 
@@ -38,7 +45,9 @@
         android:layout_marginBottom="16dp"
         app:srcCompat="@android:drawable/ic_menu_delete"
         app:tint="@android:color/white"
+        app:fabCustomSize="64dp"
         android:backgroundTint="@android:color/holo_red_dark"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.FAB"
         android:contentDescription="Xóa thuốc đã chọn" />
 
     <!-- 🟢 Nút THÊM thuốc -->
@@ -50,9 +59,11 @@
         android:layout_above="@id/bottomNavContainer"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
+        app:fabCustomSize="64dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
         android:backgroundTint="@android:color/holo_green_dark"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.FAB"
         android:contentDescription="Thêm thuốc mới" />
 
     <!-- ✅ Include thanh bottom nav mới -->

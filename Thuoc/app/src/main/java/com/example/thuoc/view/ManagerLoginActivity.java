@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.thuoc.R;
 import com.example.thuoc.controller.AuthController;
 
-public class LoginActivity extends AppCompatActivity {
+public class ManagerLoginActivity extends AppCompatActivity {
 
     private AuthController authController;
 
@@ -34,17 +34,17 @@ public class LoginActivity extends AppCompatActivity {
             String pass = etPassword.getText().toString().trim();
 
             if (phone.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(LoginActivity.this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ManagerLoginActivity.this, "Vui lòng nhập đủ thông tin", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             // Truyền đúng Activity context, không phải getApplicationContext()
             Log.d("LoginActivity", "Đăng nhập với: " + phone);
-            authController.loginUser(LoginActivity.this, phone, pass);
+            authController.loginUser(ManagerLoginActivity.this, phone, pass);
         });
 
         tvGoRegister.setOnClickListener(v -> {
-            Intent i = new Intent(LoginActivity.this, RegisterActivity.class);
+            Intent i = new Intent(ManagerLoginActivity.this, ManagerRegisterActivity.class);
             startActivity(i);
         });
     }

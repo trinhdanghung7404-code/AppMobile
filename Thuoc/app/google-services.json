@@ -25,5 +25,7 @@
       }
     }
   ],
-  "configuration_version": "1"
+  "configuration_version": "1",
+  "firebase_url": "https://minihos-42118-default-rtdb.asia-southeast1.firebasedatabase.app"
+
 }

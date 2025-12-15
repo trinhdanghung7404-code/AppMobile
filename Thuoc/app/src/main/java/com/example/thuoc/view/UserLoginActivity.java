@@ -47,14 +47,15 @@ public class UserLoginActivity extends AppCompatActivity {
                 .addOnSuccessListener(querySnapshot -> {
                     if (!querySnapshot.isEmpty()) {
                         DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
-
-                        String userId = doc.getId();
+                        String usermedId = doc.getId();
                         String userName = doc.getString("userName");
+                        String userId    = doc.getString("userId");
 
                         // Chuyển sang UserMedicineActivity
                         Intent i = new Intent(UserLoginActivity.this, UserDashboardActivity.class);
-                        i.putExtra("userId", userId);
+                        i.putExtra("usermedId", usermedId);
                         i.putExtra("userName", userName);
+                        i.putExtra("userId", userId);
                         startActivity(i);
                         finish();
                     } else {
