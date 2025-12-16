@@ -107,6 +107,7 @@ public class ManagerMedicineEditActivity extends AppCompatActivity {
     // 🗑️ Xoá thuốc được chọn
     private void deleteSelectedMedicines() {
         Set<String> selectedIds = adapter.getSelectedIds();
+
         if (selectedIds.isEmpty()) {
             Toast.makeText(this, "Chưa chọn thuốc để xoá", Toast.LENGTH_SHORT).show();
             return;
@@ -115,22 +116,21 @@ public class ManagerMedicineEditActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Xóa thuốc")
                 .setMessage("Bạn có chắc muốn xoá " + selectedIds.size() + " thuốc đã chọn?")
-                .setPositiveButton("Xoá", (dialog, which) -> {
-                    // Cần kiểm tra lại: Trong MedicineDAO chưa có hàm xoá có userId,
-                    // nhưng logic của bạn ở đây chỉ dựa vào ID, nên tôi giữ nguyên
-                    // (Vì khi load đã lọc theo user rồi)
-                    for (String id : selectedIds) {
-                        db.collection("Medicine").document(id)
-                                .delete()
-                                .addOnSuccessListener(v ->
-                                        Toast.makeText(this, "Đã xoá thuốc ID " + id, Toast.LENGTH_SHORT).show())
-                                .addOnFailureListener(e ->
-                                        Toast.makeText(this, "Lỗi khi xoá: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                    }
-                    selectedIds.clear();
-                    // Cần load lại dữ liệu để cập nhật UI sau khi xóa
-                    loadMedicines();
-                })
+                .setPositiveButton("Xoá", (dialog, which) ->
+                        medicineDAO.deleteMedicines(
+                                selectedIds,
+                                () -> {
+                                    Toast.makeText(this, "Đã xoá thuốc", Toast.LENGTH_SHORT).show();
+                                    selectedIds.clear();
+                                    loadMedicines();
+                                },
+                                e -> Toast.makeText(
+                                        this,
+                                        "Lỗi khi xoá: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT
+                                ).show()
+                        )
+                )
                 .setNegativeButton("Hủy", null)
                 .show();
     }
@@ -143,28 +143,25 @@ public class ManagerMedicineEditActivity extends AppCompatActivity {
         EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
         EditText etExpiry = dialogView.findViewById(R.id.etExpiry);
 
-        // 🔹 Thêm DatePicker cho ô hạn sử dụng
         etExpiry.setFocusable(false);
         etExpiry.setClickable(true);
         etExpiry.setOnClickListener(v -> {
-            final Calendar c = Calendar.getInstance();
-            int year = c.get(Calendar.YEAR);
-            int month = c.get(Calendar.MONTH);
-            int day = c.get(Calendar.DAY_OF_MONTH);
-
-            DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                    (view, year1, monthOfYear, dayOfMonth) -> {
-                        String selectedDate = String.format(Locale.getDefault(),
-                                "%02d/%02d/%04d", dayOfMonth, monthOfYear + 1, year1);
-                        etExpiry.setText(selectedDate);
-                    }, year, month, day);
-            datePickerDialog.show();
+            Calendar c = Calendar.getInstance();
+            new DatePickerDialog(this,
+                    (view, y, m, d) -> etExpiry.setText(
+                            String.format(Locale.getDefault(), "%02d/%02d/%04d", d, m + 1, y)
+                    ),
+                    c.get(Calendar.YEAR),
+                    c.get(Calendar.MONTH),
+                    c.get(Calendar.DAY_OF_MONTH)
+            ).show();
         });
 
         new AlertDialog.Builder(this)
                 .setTitle("Thêm thuốc")
                 .setView(dialogView)
                 .setPositiveButton("Lưu", (dialog, which) -> {
+
                     String name = etName.getText().toString().trim();
                     String qtyStr = etQuantity.getText().toString().trim();
                     String expiry = etExpiry.getText().toString().trim();
@@ -177,39 +174,26 @@ public class ManagerMedicineEditActivity extends AppCompatActivity {
                     int qty;
                     try {
                         qty = Integer.parseInt(qtyStr);
-                        if (qty < 0) {
-                            Toast.makeText(this, "Số lượng không hợp lệ", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Số lượng phải là số", Toast.LENGTH_SHORT).show();
+                        if (qty < 0) throw new NumberFormatException();
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Số lượng không hợp lệ", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // 🚩 THAY ĐỔI 4: Thêm thuốc với userId
-
-                    // Sử dụng ID tăng dần (theo logic cũ của bạn)
-                    db.collection("Medicine")
-                            .get()
-                            .addOnSuccessListener(query -> {
-                                int nextId = query.size() + 1;
-                                String id = String.valueOf(nextId);
-
-                                // Khởi tạo Medicine với các trường mới (vì bạn đã cập nhật constructor)
-                                // Lưu ý: constructor mới của bạn có 6 tham số: (id, name, expirydate, quantity, unit, userId)
-                                // Tuy nhiên, vì unit đã bị bỏ qua trong dialog, tôi sẽ dùng default là "viên"
-                                Medicine med = new Medicine(id, name, expiry, qty, "viên", currentUserId);
-
-                                // Gọi addMedicine đã được cập nhật
-                                medicineDAO.addMedicine(
-                                        med,
-                                        currentUserId,
-                                        () -> { /* onSuccess */ },
-                                        // 💡 SỬA LỖI TẠI ĐÂY: Thêm tham số 'e'
-                                        (e) -> Toast.makeText(this, "Lỗi khi thêm thuốc: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                                );
-                            })
-                            .addOnFailureListener(e -> Toast.makeText(this, "Không thể tạo ID: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    medicineDAO.addMedicine(
+                            name,
+                            expiry,
+                            qty,
+                            "viên",
+                            currentUserId,
+                            () -> {
+                                Toast.makeText(this, "Đã thêm thuốc", Toast.LENGTH_SHORT).show();
+                                loadMedicines();
+                            },
+                            e -> Toast.makeText(this,
+                                    "Lỗi khi thêm thuốc: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT).show()
+                    );
                 })
                 .setNegativeButton("Hủy", null)
                 .show();

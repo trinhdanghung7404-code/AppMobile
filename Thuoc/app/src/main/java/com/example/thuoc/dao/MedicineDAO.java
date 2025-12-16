@@ -45,34 +45,70 @@ public class MedicineDAO {
                     }
                 });
     }
-    public void addMedicine(Medicine med,
+    public void addMedicine(String name,
+                            String expiryDate,
+                            int quantity,
+                            String unit,
                             String userId,
                             Runnable onSuccess,
                             Consumer<Exception> onError) {
 
-        med.setUserId(userId);
-
         db.collection("Medicine")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    int newId = querySnapshot.size() + 1;
-                    String id = String.valueOf(newId);
-                    med.setId(id);
+                .addOnSuccessListener(qs -> {
+
+                    // ⚠️ Giữ nguyên logic ID của bạn (chưa tối ưu)
+                    String id = String.valueOf(qs.size() + 1);
+
+                    Medicine med = new Medicine(
+                            id,
+                            name,
+                            expiryDate,
+                            quantity,
+                            unit,
+                            userId
+                    );
 
                     db.collection("Medicine")
                             .document(id)
                             .set(med)
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d("MedicineDAO", "Thêm thuốc thành công, id = " + id);
+                            .addOnSuccessListener(v -> {
+                                Log.d("MedicineDAO", "✅ Thêm thuốc thành công: " + id);
                                 if (onSuccess != null) onSuccess.run();
                             })
                             .addOnFailureListener(e -> {
-                                Log.e("MedicineDAO", "Lỗi khi thêm thuốc", e);
+                                Log.e("MedicineDAO", "❌ Lỗi khi thêm thuốc", e);
                                 if (onError != null) onError.accept(e);
                             });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("MedicineDAO", "Không thể lấy danh sách thuốc", e);
+                    Log.e("MedicineDAO", "❌ Không tạo được ID", e);
+                    if (onError != null) onError.accept(e);
+                });
+    }
+    public void deleteMedicines(Set<String> medicineIds,
+                                Runnable onSuccess,
+                                Consumer<Exception> onError) {
+
+        if (medicineIds == null || medicineIds.isEmpty()) {
+            if (onSuccess != null) onSuccess.run();
+            return;
+        }
+
+        WriteBatch batch = db.batch();
+
+        for (String id : medicineIds) {
+            DocumentReference ref = db.collection("Medicine").document(id);
+            batch.delete(ref);
+        }
+
+        batch.commit()
+                .addOnSuccessListener(v -> {
+                    Log.d("MedicineDAO", "✅ Đã xoá " + medicineIds.size() + " thuốc");
+                    if (onSuccess != null) onSuccess.run();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("MedicineDAO", "❌ Lỗi khi xoá batch", e);
                     if (onError != null) onError.accept(e);
                 });
     }

@@ -19,6 +19,11 @@ public class MedicationLogDAO {
     private static final String TAG = "MedicationLogDAO";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    public interface HistoryCallback {
+        void onSuccess(List<Map<String, Object>> logs);
+        void onError(Exception e);
+    }
+
     public void logEvent(
             String usermedId,
             String managerId,
@@ -69,5 +74,26 @@ public class MedicationLogDAO {
         ).addOnFailureListener(e ->
                 Log.e(TAG, "❌ Log transaction failed", e)
         );
+    }
+
+    public void getHistoryByUserMedId(String usermedId, HistoryCallback callback) {
+        db.collection("medication_logs")
+                .whereEqualTo("usermedId", usermedId)
+                .get()
+                .addOnSuccessListener(qs -> {
+                    List<Map<String, Object>> result = new ArrayList<>();
+
+                    for (DocumentSnapshot d : qs) {
+                        List<Map<String, Object>> arr =
+                                (List<Map<String, Object>>) d.get("logs");
+
+                        if (arr != null) {
+                            result.addAll(arr);
+                        }
+                    }
+
+                    callback.onSuccess(result);
+                })
+                .addOnFailureListener(callback::onError);
     }
 }

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.thuoc.R;
 import com.example.thuoc.adapter.MedicationLogAdapter;
+import com.example.thuoc.dao.MedicationLogDAO;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -24,6 +25,7 @@ public class ManagerMedicationHistoryActivity extends AppCompatActivity {
 
     private final List<Map<String, Object>> logs = new ArrayList<>();
     private MedicationLogAdapter adapter;
+    private MedicationLogDAO logDao;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,23 +48,19 @@ public class ManagerMedicationHistoryActivity extends AppCompatActivity {
     }
 
     private void loadHistory(String usermedId) {
-        FirebaseFirestore.getInstance()
-                .collection("medication_logs")
-                .whereEqualTo("usermedId", usermedId) // 🔥 ĐÚNG
-                .get()
-                .addOnSuccessListener(qs -> {
-                    logs.clear();
+        logDao.getHistoryByUserMedId(usermedId, new MedicationLogDAO.HistoryCallback() {
+            @Override
+            public void onSuccess(List<Map<String, Object>> data) {
+                logs.clear();
+                logs.addAll(data);
+                adapter.notifyDataSetChanged();
+            }
 
-                    for (DocumentSnapshot d : qs) {
-                        List<Map<String, Object>> arr =
-                                (List<Map<String, Object>>) d.get("logs");
-
-                        if (arr != null) {
-                            logs.addAll(arr);
-                        }
-                    }
-
-                    adapter.notifyDataSetChanged();
-                });
+            @Override
+            public void onError(Exception e) {
+                // TODO: show error UI / toast / log
+                e.printStackTrace();
+            }
+        });
     }
 }

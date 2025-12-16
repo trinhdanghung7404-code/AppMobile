@@ -1,9 +1,11 @@
 package com.example.thuoc.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,18 +54,32 @@ public class SelectMedicineAdapter extends RecyclerView.Adapter<SelectMedicineAd
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Medicine m = medicineList.get(position);
-        holder.tvName.setText(m.getName());
-        holder.tvQuantity.setText("Số lượng: " + m.getQuantity() + m.getUnit());
-        holder.tvExpiry.setText("HSD: " + m.getExpiryDate());
+    public void onBindViewHolder(@NonNull ViewHolder h, int pos) {
+        Medicine med = medicineList.get(pos);
 
-        // Bắt sự kiện click để chọn thuốc
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onMedicineClick(m);
-            }
-        });
+        h.tvName.setText(med.getName());
+        h.tvExpiry.setText("HSD: " + med.getExpiryDate());
+        h.tvQuantity.setText("Số lượng: " + med.getQuantity() + med.getUnit());
+
+        boolean expired = isExpired(med.getExpiryDate());
+
+        if (expired) {
+            h.itemView.setAlpha(0.4f);
+            h.itemView.setBackgroundColor(Color.parseColor("#55FF0000")); // đỏ mờ
+
+            h.itemView.setOnClickListener(v ->
+                    Toast.makeText(
+                            v.getContext(),
+                            "Thuốc đã hết hạn",
+                            Toast.LENGTH_SHORT
+                    ).show()
+            );
+        } else {
+            h.itemView.setAlpha(1f);
+            h.itemView.setBackgroundColor(Color.TRANSPARENT);
+
+            h.itemView.setOnClickListener(v -> listener.onMedicineClick(med));
+        }
     }
 
     @Override
