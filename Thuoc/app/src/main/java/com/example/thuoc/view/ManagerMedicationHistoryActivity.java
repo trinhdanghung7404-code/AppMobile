@@ -39,6 +39,8 @@ public class ManagerMedicationHistoryActivity extends AppCompatActivity {
         adapter = new MedicationLogAdapter(logs);
         rvHistory.setAdapter(adapter);
 
+        logDao = new MedicationLogDAO();
+
         String usermedId = getIntent().getStringExtra("usermedId");
         String userName = getIntent().getStringExtra("userName");
 

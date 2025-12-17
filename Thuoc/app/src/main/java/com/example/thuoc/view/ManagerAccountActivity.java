@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.thuoc.MainActivity;
 import com.example.thuoc.R;
 import com.example.thuoc.adapter.ManagedUserAdapter;
+import com.example.thuoc.dao.UserDAO;
 import com.example.thuoc.model.User;
 import com.example.thuoc.model.UserMedicine;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -31,6 +32,7 @@ public class ManagerAccountActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private ManagedUserAdapter adapter;
+    private UserDAO userDAO;
 
     // 👉 Adapter sẽ giữ cả user + usermedId
     private final List<UserMedicine> managedUsers = new ArrayList<>();
@@ -59,10 +61,9 @@ public class ManagerAccountActivity extends AppCompatActivity {
                     i.putExtra("userName", user.getUserName());
                     startActivity(i);
                 });
-
         rvManagedUsers.setAdapter(adapter);
 
-        // ===== Lấy managerId =====
+        userDAO = new UserDAO();
         String managerId = getSharedPreferences("USER_SESSION", MODE_PRIVATE)
                 .getString("user_id", null);
 
@@ -88,39 +89,32 @@ public class ManagerAccountActivity extends AppCompatActivity {
     }
 
     // ================= LOAD USER INFO =================
-    private void loadUserInfo(String userId) {
-        db.collection("Users").document(userId)
-                .get()
-                .addOnSuccessListener(d -> {
-                    if (!d.exists()) return;
-                    User user = d.toObject(User.class);
-                    if (user != null) {
-                        tvName.setText("Họ tên: " + user.getName());
-                        tvPhone.setText("Số điện thoại: " + user.getPhone());
-                    }
-                });
+    private void loadUserInfo(String managerId) {
+        userDAO.loadManagerInfo(
+                managerId,
+                user -> {
+                    if (user == null) return;
+                    tvName.setText("Họ tên: " + user.getName());
+                    tvPhone.setText("Số điện thoại: " + user.getPhone());
+                },
+                e -> Toast.makeText(this,
+                        "Lỗi tải thông tin người dùng",
+                        Toast.LENGTH_SHORT).show()
+        );
     }
 
     // ================= LOAD MANAGED USERS =================
     private void loadManagedUsers(String managerId) {
-        db.collection("UserMedicine")   // ⚠️ đúng collection bạn đang dùng
-                .whereEqualTo("userId", managerId)
-                .get()
-                .addOnSuccessListener(qs -> {
+        userDAO.loadManagedUsers(
+                managerId,
+                users -> {
                     managedUsers.clear();
-
-                    for (DocumentSnapshot d : qs) {
-                        UserMedicine um = d.toObject(UserMedicine.class);
-                        if (um != null) {
-                            um.setUsermedId(d.getId()); // 🔥 documentId = usermedId
-                            managedUsers.add(um);
-                        }
-                    }
+                    managedUsers.addAll(users);
                     adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this,
-                                "Lỗi tải danh sách quản lý",
-                                Toast.LENGTH_SHORT).show());
+                },
+                e -> Toast.makeText(this,
+                        "Lỗi tải danh sách quản lý",
+                        Toast.LENGTH_SHORT).show()
+        );
     }
 }

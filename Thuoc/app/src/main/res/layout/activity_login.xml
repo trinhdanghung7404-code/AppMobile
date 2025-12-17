@@ -18,6 +18,7 @@
         android:textStyle="bold"
         android:layout_marginBottom="32dp" />
 
+    <!-- sdt -->
     <EditText
         android:id="@+id/etPhone"
         android:layout_width="match_parent"
@@ -28,7 +29,7 @@
         android:padding="12dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Nhập mật khẩu -->
+    <!-- Mật khẩu -->
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
@@ -37,7 +38,19 @@
         android:inputType="textPassword"
         android:drawableStart="@android:drawable/ic_lock_lock"
         android:padding="12dp"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="8dp" />
+
+    <!-- Quên mật khẩu -->
+    <TextView
+        android:id="@+id/tvForgotPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quên mật khẩu?"
+        android:textColor="@color/purple_500"
+        android:textStyle="bold"
+        android:layout_gravity="end"
+        android:padding="4dp"
+        android:layout_marginBottom="20dp" />
 
     <!-- Nút đăng nhập -->
     <Button
@@ -55,7 +68,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Chưa có tài khoản? Đăng ký ngay"
-        android:textColor="@color/teal_700" />
+        android:textColor="@color/teal_700"
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>
-
